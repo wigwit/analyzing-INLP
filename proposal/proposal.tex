@@ -45,27 +45,20 @@
 \begin{document}
 
 \maketitle
-\begin{abstract}
-This document contains the instructions for preparing a manuscript for the proceedings of ACL 2020.
-The document itself conforms to its own specifications, and is therefore an example of what your manuscript should look like.
-These instructions should be used for both papers submitted for review and for final versions of accepted papers.
-Authors are asked to conform to all the directions reported in this document.
-\end{abstract}
-
-
-
 
 \section{Introduction}
 
-The following instructions are directed to authors of papers submitted to ACL 2020 or accepted for publication in its proceedings.
-All authors are required to adhere to these specifications.
-Authors are required to provide a Portable Document Format (PDF) version of their papers.
-\textbf{The proceedings are designed for printing on A4 paper.}
+The boundary between semantics and syntax has always been a hotly debated topic in linguistics since generative syntax, but do NLP models make such a distinction? The objective of this project is to explore BERT\rq s reliance on certain syntactic information when handling a semantic task, and vice versa. To achieve our goal, we will construct a linear probing system for a task and then employ Iterative Nullspace Projection (INLP) \citep{inlp} to generate a new embedding devoid of information learned from probing task. Then we will measure the performance of another task on this new embedding.
 
+The design of our probing procedure follows \citealp{amnesia}, who employed Iterative Nullspace Projection (INLP from here) to investigate whether BERT uses part-of-speech (PoS) information when solving language modeling (LM) tasks. A novel method for removing information from a embedding, INLP iteratively trains a linear model on a specific task, and projects the input on the nullspace of the linear model. Our objective is that, by applying the INLP procedure to a syntactic task, we are able to separate the representation into a syntactic space and a non-syntactic space. Then we can compare the performance of a semantic task in whole space and only in the non-syntactic space to see if BERT is using syntactic information when performing the semantic task. Conversely, we can also first probe a semantic task and then measure with a syntactic task. 
+
+To evaluate the separability of syntax and semantics, we will need two task, one task for the probing system and INLP procedure, one task for measure performance on embeddings before and after INLP. We choose Combinatory Categorical Grammar (CCG) tagging as the syntactic task and Semantic Role Labeling (SRL) as the semantic task. Section \ref{sec:method} provides description of the tasks and the construction of the experiment pipeline. Section \ref{sec:result} provddes possible results and interpretations. Finally, section \ref{sec:management} provides project management details including timeline and division of labor.
+% If the removing of syntactic information leads to a insignificant decrease in the model\rq s performance in a semantic task (or removing semantic information leads to insignificant decrease in performance in a syntactic task), we can conclude that syntactic and semantic information in BERT\rq s representation is linearly separable. Conversely, an significant decrease in performance will indicate low separability between syntactic and semantic information in BERT \rq s representation.
 
 \section{Methods}
+\label{sec:method}
 
-We construct two separate probing tasks to isolate the syntactic and semantic information in word-level BERT embeddings. The embeddings are separated into syntactic and non-syntactic, and semantic and non-semantic components via Iterative Null-Space Projection (INLP), which is described in section 2.1. These embedding components are then combined to form new embeddings, which are evaluated on the same tasks that were used for probing. If time permits, we will also evaluate how these new embeddings perform on the language modeling task. 
+We construct two separate probing tasks to isolate the syntactic and semantic information in word-level BERT embeddings\citep{bert}. The embeddings are separated into syntactic and non-syntactic, and semantic and non-semantic components via Iterative Null-Space Projection (INLP), which is described in section 2.1. These embedding components are then combined to form new embeddings, which are evaluated on the same tasks that were used for probing. If time permits, we will also evaluate how these new embeddings perform on the language modeling task. 
 %cite BERT paper maybe?
 %cite INLP paper
 
@@ -107,7 +100,7 @@ We will assess each of these embedding types and the original BERT embeddings on
 
 
 \section{Possible Results}
-\label{sec:length}
+\label{sec:result}
 
 In this section, we consider what each evaluation task tells us about the embeddings that are being probed. When we isolate the syntactic component and run it on the syntactic and semantic tasks, we learn how successfully the component responsible for CCG tagging has been isolated, and we also learn how effective the syntactic component alone is on the semantic task. Similarly, running the semantic component on the evaluation tasks tells us how well we've isolated the semantic component and how effective it is on the syntactic task. Finally, running the non-syntactic and non-semantic components on the evaluation tasks tells us whether any information not identified by INLP is at all useful for the evaluation tasks.
 
@@ -115,64 +108,15 @@ Next, we consider the potential results of the various projected word embeddings
 
 
 \section{Divsion of Labor and Timeline}
-As reviewing will be double-blind, papers submitted for review should not include any author information (such as names or affiliations). Furthermore, self-references that reveal the author's identity, \emph{e.g.},
-\begin{quote}
-We previously showed \citep{Gusfield:97} \ldots
-\end{quote}
-should be avoided. Instead, use citations such as 
-\begin{quote}
-\citet{Gusfield:97} previously showed\ldots
-\end{quote}
-Please do not use anonymous citations and do not include acknowledgements.
-\textbf{Papers that do not conform to these requirements may be rejected without review.}
-
-Any preliminary non-archival versions of submitted papers should be listed in the submission form but not in the review version of the paper.
-Reviewers are generally aware that authors may present preliminary versions of their work in other venues, but will not be provided the list of previous presentations from the submission form.
-
-Once a paper has been accepted to the conference, the camera-ready version of the paper should include the author's names and affiliations, and is allowed to use self-references.
-
-\paragraph{\LaTeX-specific details:}
-For an anonymized submission, ensure that {\small\verb|\aclfinalcopy|} at the top of this document is commented out, and that you have filled in the paper ID number (assigned during the submission process on softconf) where {\small\verb|***|} appears in the {\small\verb|\def\aclpaperid{***}|} definition at the top of this document.
-For a camera-ready submission, ensure that {\small\verb|\aclfinalcopy|} at the top of this document is not commented out.
+\label{sec:management}
+this is 
 
 
 
 
 
-
-\section*{Acknowledgments}
-
-The acknowledgments should go immediately before the references. Do not number the acknowledgments section.
-Do not include this section when submitting your paper for review.
-
-\bibliography{anthology,acl2020}
+\bibliography{acl2020}
 \bibliographystyle{acl_natbib}
 
-\appendix
-
-\section{Appendices}
-\label{sec:appendix}
-Appendices are material that can be read, and include lemmas, formulas, proofs, and tables that are not critical to the reading and understanding of the paper. 
-Appendices should be \textbf{uploaded as supplementary material} when submitting the paper for review.
-Upon acceptance, the appendices come after the references, as shown here.
-
-\paragraph{\LaTeX-specific details:}
-Use {\small\verb|\appendix|} before any appendix section to switch the section numbering over to letters.
-
-
-\section{Supplemental Material}
-\label{sec:supplemental}
-Submissions may include non-readable supplementary material used in the work and described in the paper.
-Any accompanying software and/or data should include licenses and documentation of research review as appropriate.
-Supplementary material may report preprocessing decisions, model parameters, and other details necessary for the replication of the experiments reported in the paper.
-Seemingly small preprocessing decisions can sometimes make a large difference in performance, so it is crucial to record such decisions to precisely characterize state-of-the-art methods. 
-
-Nonetheless, supplementary material should be supplementary (rather than central) to the paper.
-\textbf{Submissions that misuse the supplementary material may be rejected without review.}
-Supplementary material may include explanations or details of proofs or derivations that do not fit into the paper, lists of
-features or feature templates, sample inputs and outputs for a system, pseudo-code or source code, and data.
-(Source code and data should be separate uploads, rather than part of the paper).
-
-The paper should not rely on the supplementary material: while the paper may refer to and cite the supplementary material and the supplementary material will be available to the reviewers, they will not be asked to review the supplementary material.
 
 \end{document}
