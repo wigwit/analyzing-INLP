@@ -52,8 +52,7 @@ The boundary between semantics and syntax has always been a hotly debated topic 
 
 The design of our probing procedure follows \citealp{amnesia}, who employed Iterative Nullspace Projection (INLP from here) to investigate whether BERT uses part-of-speech (PoS) information when solving language modeling (LM) tasks. A novel method for removing information from a embedding, INLP iteratively trains a linear model on a specific task, and projects the input on the nullspace of the linear model. Our objective is that, by applying the INLP procedure to a syntactic task, we are able to separate the representation into a syntactic space and a non-syntactic space. Then we can compare the performance of a semantic task in whole space and only in the non-syntactic space to see if BERT is using syntactic information when performing the semantic task. Conversely, we can also first probe a semantic task and then measure with a syntactic task. 
 
-To evaluate the separability of syntax and semantics, we will need two task, one task for the probing system and INLP procedure, one task for measure performance on embeddings before and after INLP. We choose Combinatory Categorical Grammar (CCG) tagging as the syntactic task and Semantic Role Labeling (SRL) as the semantic task. Section \ref{sec:method} provides description of the tasks and the construction of the experiment pipeline. Section \ref{sec:result} provddes possible results and interpretations. Finally, section \ref{sec:management} provides project management details including timeline and division of labor.
-% If the removing of syntactic information leads to a insignificant decrease in the model\rq s performance in a semantic task (or removing semantic information leads to insignificant decrease in performance in a syntactic task), we can conclude that syntactic and semantic information in BERT\rq s representation is linearly separable. Conversely, an significant decrease in performance will indicate low separability between syntactic and semantic information in BERT \rq s representation.
+To evaluate the separability of syntax and semantics, we will need two task, one task for the probing system and INLP procedure, one task for evaluating performance on embeddings before and after INLP. We choose Combinatory Categorical Grammar (CCG) tagging as the syntactic task and Semantic Role Labeling (SRL) as the semantic task. Section \ref{sec:method} provides description of the tasks and the construction of the experiment pipeline. Section \ref{sec:result} provides possible results and interpretations. Finally, section \ref{sec:management} provides project management details including timeline and division of labor.
 
 \section{Methods}
 \label{sec:method}
@@ -76,7 +75,7 @@ We will pair the INLP method with the probing tasks described in sections 2.3 an
 \subsection{Data}
 
 %Description of the data set used and the information it contains relevant to the tasks of interest. Talk about pre-processing the syntax trees to get CCG tags. 
-We will use the English V4 subset of the CoNLL 2012 shared task data. We must perform two pre-processing steps for this data to be used for our probing and evaluation tasks. The first is to apply Hockenmaier and Steedman's CCG Derivation algorithm to the parse tree field in the dataset, in order to create the CCG tags for each word. If this proves to be too time-consuming or computationally expensive then we shall change the syntactic probing task to utilize the POS tags available in the dataset, in place of CCG tags. The second task is to use the SRL frames in the dataset to generate (verb, BIO-argument-tag) pairs that will act as the categories for the semantic probing task. 
+We will use the English V4 subset of the CoNLL 2012 shared task data\citep{2012-conll} . We must perform two pre-processing steps for this data to be used for our probing and evaluation tasks. The first is to apply \citet{ccg-bank}'s CCG Derivation algorithm to the parse tree field in the dataset, in order to create the CCG tags for each word. If this proves to be too time-consuming or computationally expensive then we shall change the syntactic probing task to utilize the POS tags available in the dataset, in place of CCG tags. The second task is to use the SRL frames in the dataset to generate (verb, BIO-argument-tag) pairs that will act as the categories for the semantic probing task. 
 %cite CCG paper
 
 \subsection{Syntactic probing task}
@@ -106,10 +105,15 @@ In this section, we consider what each evaluation task tells us about the embedd
 
 Next, we consider the potential results of the various projected word embeddings on the evaluation tasks. Each of these tell us how much overlap there is between the syntactic and semantic components of the contextual word embeddings. Projecting the syntactic component onto the non-semantic component removes semantic information from the syntactic component, and projecting the semantic component onto the non-syntactic component removes syntactic information from the semantic component. Projecting the syntactic component onto the semantic component gives us the semantic information that is also part of the syntactic component, and projecting the semantic component onto the syntactic component gives us the syntactic information that is also part of the semantic component. Running all of these embeddings un the semantic and syntactic tasks tells us how separated the semantic and syntactic components are, and how important the overlapping portions are to each task.
 
+% If the removing of syntactic information leads to a insignificant decrease in the model\rq s performance in a semantic task (or removing semantic information leads to insignificant decrease in performance in a syntactic task), we can conclude that syntactic and semantic information in BERT\rq s representation is linearly separable. Conversely, an significant decrease in performance will indicate low separability between syntactic and semantic information in BERT \rq s representation.
+
 
 \section{Divsion of Labor and Timeline}
 \label{sec:management}
-this is 
+There are three main parts of this project, coding the experiment, presenting related topics in class and writing the final paper. Each part has detailed roles and 
+
+
+
 
 
 
