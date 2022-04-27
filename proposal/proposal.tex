@@ -16,6 +16,7 @@
 \usepackage[hyperref]{acl2020}
 \usepackage{times}
 \usepackage{latexsym}
+\usepackage{multirow}
 \renewcommand{\UrlFont}{\ttfamily\small}
 
 % This is not strictly necessary, and may be commented out,
@@ -101,17 +102,40 @@ We will assess each of these embedding types and the original BERT embeddings on
 \section{Possible Results}
 \label{sec:result}
 
-In this section, we consider what each evaluation task tells us about the embeddings that are being probed. When we isolate the syntactic component and run it on the syntactic and semantic tasks, we learn how successfully the component responsible for CCG tagging has been isolated, and we also learn how effective the syntactic component alone is on the semantic task. Similarly, running the semantic component on the evaluation tasks tells us how well we've isolated the semantic component and how effective it is on the syntactic task. Finally, running the non-syntactic and non-semantic components on the evaluation tasks tells us whether any information not identified by INLP is at all useful for the evaluation tasks.
+In this section, we consider what each evaluation task tells us about the embeddings that are being probed. When we isolate the syntactic component and run it on the syntactic and semantic tasks, we learn how successfully the component responsible for CCG tagging has been isolated, and we also learn how effective the syntactic component alone is on the semantic task. Similarly, running the semantic component on the evaluation tasks tells us how well we've isolated the semantic component and how effective it is on the syntactic task. If the removing of syntactic information leads to a insignificant decrease in the model\rq s performance in a semantic task (or removing semantic information leads to insignificant decrease in performance in a syntactic task), we can conclude that syntactic and semantic information in BERT\rq s representation is linearly separable. Conversely, an significant decrease in performance will indicate low separability between syntactic and semantic information in BERT \rq s representation.Finally, running the non-syntactic and non-semantic components on the evaluation tasks tells us whether any information not identified by INLP is at all useful for the evaluation tasks.
 
 Next, we consider the potential results of the various projected word embeddings on the evaluation tasks. Each of these tell us how much overlap there is between the syntactic and semantic components of the contextual word embeddings. Projecting the syntactic component onto the non-semantic component removes semantic information from the syntactic component, and projecting the semantic component onto the non-syntactic component removes syntactic information from the semantic component. Projecting the syntactic component onto the semantic component gives us the semantic information that is also part of the syntactic component, and projecting the semantic component onto the syntactic component gives us the syntactic information that is also part of the semantic component. Running all of these embeddings un the semantic and syntactic tasks tells us how separated the semantic and syntactic components are, and how important the overlapping portions are to each task.
 
-% If the removing of syntactic information leads to a insignificant decrease in the model\rq s performance in a semantic task (or removing semantic information leads to insignificant decrease in performance in a syntactic task), we can conclude that syntactic and semantic information in BERT\rq s representation is linearly separable. Conversely, an significant decrease in performance will indicate low separability between syntactic and semantic information in BERT \rq s representation.
+
 
 
 \section{Divsion of Labor and Timeline}
 \label{sec:management}
-There are three main parts of this project, coding the experiment, presenting related topics in class and writing the final paper. Each part has detailed roles and 
+There are three main parts of this project, coding the experiment, presenting related topics in class and writing the final paper. Each part has detailed requirements and been assigned to a member to take charge of as presented in table \ref{role description}. It is hard to anticipate the time consumed and difficulty of each task. We have set up a regular weekly meeting to update the progress of each part weekly so that everyone is on the same page with the development of the project. 
 
+\begin{table*}[ht]
+    \centering
+    \begin{tabular}{llll}
+    \hline
+    \textbf{Duty} & \textbf{Details} & \textbf{Who is in Charge} \\
+    \hline
+    \multirow{5}{*}{Coding the experiment} & data preprocessing & Qingxia \\
+    & building probing system \& INLP & Saiya \& Qingxia \\
+    & building evaluation system & Gladys \\
+    & merging subparts together & Saiya\\ 
+    & running different task pairs & Saiya \\
+    \hline
+    \multirow{2}{*}{Presenting related topic} & \multirow{2}{*}{presenting INLP method} & \multirow{2}{*}{Lindsay \& Gladys} \\
+    & & \\
+    \hline
+    \multirow{3}{*}{Writing paper} & method section  & Lindsay \\
+     & result section & Saiya  \\
+     & discussion/conclusion section & all\\
+    \hline
+    \end{tabular}
+    \caption{\label{role description} Role Description
+    }
+    \end{table*}
 
 
 
