@@ -36,10 +36,10 @@
 
 \title{Proposal for Analyzing Language Models: Separatablity of Syntax and Semantics}
 
-\author{Qingxia Guo \and Saiya Karamali \and Lindsay Skinner \and Gladys Wang
+\author{Qingxia Guo, Saiya Karamali, Lindsay Skinner, \and Gladys Wang
  \\ University of Washington \\ 
-\texttt{qg07@uw.edu}\\ \texttt{karamali@uw.edu}  \\ \texttt{skinnel@uw.edu} \\ \texttt{@uw.edu}}
-
+\texttt{\{qg07, karamali, skinnel, qinyanw\}@uw.edu}\\ 
+}
 \date{}
 
 \begin{document}
@@ -111,23 +111,9 @@ We have also hypothesized several additional assessment tasks that we would like
 \section{Possible Results}
 \label{sec:length}
 
-The conference accepts submissions of long papers and short papers.
-Long papers may consist of up to eight (8) pages of content plus unlimited pages for references.
-Upon acceptance, final versions of long papers will be given one additional page -- up to nine (9) pages of content plus unlimited pages for references -- so that reviewers' comments can be taken into account.
-Short papers may consist of up to four (4) pages of content, plus unlimited pages for references.
-Upon acceptance, short papers will be given five (5) pages in the proceedings and unlimited pages for references. 
-For both long and short papers, all illustrations and tables that are part of the main text must be accommodated within these page limits, observing the formatting instructions given in the present document.
-Papers that do not conform to the specified length and formatting requirements are subject to be rejected without review.
+In this section, we consider what each evaluation task tells us about the embeddings that are being probed. When we isolate the syntactic component and run it on the syntactic and semantic tasks, we learn how successfully the component responsible for CCG tagging has been isolated, and we also learn how effective the syntactic component alone is on the semantic task. Similarly, running the semantic component on the evaluation tasks tells us how well we've isolated the semantic component and how effective it is on the syntactic task. Finally, running the non-syntactic and non-semantic components on the evaluation tasks tells us whether any information not identified by INLP is at all useful for the evaluation tasks.
 
-The conference encourages the submission of additional material that is relevant to the reviewers but not an integral part of the paper.
-There are two such types of material: appendices, which can be read, and non-readable supplementary materials, often data or code.
-Additional material must be submitted as separate files, and must adhere to the same anonymity guidelines as the main paper.
-The paper must be self-contained: it is optional for reviewers to look at the supplementary material.
-Papers should not refer, for further detail, to documents, code or data resources that are not available to the reviewers.
-Refer to Appendices~\ref{sec:appendix} and \ref{sec:supplemental} for further information. 
-
-Workshop chairs may have different rules for allowed length and whether supplemental material is welcome.
-As always, the respective call for papers is the authoritative source.
+Next, we consider the potential results of the various projected word embeddings on the evaluation tasks. Each of these tell us how much overlap there is between the syntactic and semantic components of the contextual word embeddings. Projecting the syntactic component onto the non-semantic component removes semantic information from the syntactic component, and projecting the semantic component onto the non-syntactic component removes syntactic information from the semantic component. Projecting the syntactic component onto the semantic component gives us the semantic information that is also part of the syntactic component, and projecting the semantic component onto the syntactic component gives us the syntactic information that is also part of the semantic component. Running all of these embeddings un the semantic and syntactic tasks tells us how separated the semantic and syntactic components are, and how important the overlapping portions are to each task.
 
 
 \section{Divsion of Labor and Timeline}
