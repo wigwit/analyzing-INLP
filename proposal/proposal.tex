@@ -65,30 +65,34 @@ We construct two separate probing tasks to isolate the syntactic and semantic in
 \subsection{The Iterative Null-Space Projection method}
 \label{sec:inlp-method}
 
-The INLP is used to create a guarding function that masks all the linear information contained in a set of vectors, $X$, that can be used map each vector to its affiliated category, $c \in C$. This is accomplished by training a linear classifier, a matrix $W$, that is applied to each $x \in X$ in order to predict the correct category $c$ with the greatest possible accuracy. In other words, $Wx$ defines a distribution over the set of categories $C$ and we assign $x$ to the class $c \in C$ which is allotted the greatest probability by $Wx$. Note that the classifier's accuracy must be greater than random chance, otherwise $x$ contains no linear information relevant for the categorization task and thus no guarding function is needed. Once $W$ is determined, for any $x \in X$ we can remove the information that $W$ uses to predict $c$ by projecting $x$ onto the null-space of $W$, $N(W) = \{x | Wx=0\}$. Call this projection function $P_1$ and let $\hat{x} = P_1(x)$. This removes all of the linear information in $x$ that $W$ used to predict the category $c$. 
+The INLP is used to create a guarding function that masks all the linear information contained in a set of vectors, $X$, that can be used map each vector to $c \in C$, where $C$ is the set of all categories. This is accomplished by training a linear classifier, a matrix $W$, that is applied to each $x \in X$ in order to predict the correct category $c$ with the greatest possible accuracy. In other words, $Wx$ defines a distribution over the set of categories $C$ and we assign $x$ to the class $c \in C$ which is allotted the greatest probability by $Wx$. Note that the classifier's accuracy must be greater than random chance, otherwise $x$ contains no linear information relevant for the categorization task and thus no guarding function is needed. Once $W$ is determined, for any $x \in X$ we can remove the information that $W$ uses to predict $c$ by projecting $x$ onto the null-space of $W$, $N(W) = \{x | Wx=0\}$. Call this projection function $P_1$ and let $\hat{x} = P_1(x)$. This removes all of the linear information in $x$ that $W$ used to predict the category $c$. 
 %Need to cite INLP paper
 
 However, this process does not necessarily remove all of the linear information in $x$ that could be used to predict $c$. For example, $x$ may contain redundant information and $W$ may have only used one set of this information for its prediction. In this case, the redundant information would still be present in $\hat{x}$. Thus, we must repeat the above process, defining a new linear classifier $\hat{W}$ that uses $\hat{x}$  to predict $c$. If $\hat{W}$ is still able to predict $c$ with a greater than random chance accuracy, then we know that $\hat{x}$ contained linear information about $c$. As above, we project $\hat{x}$ onto the null-space of $\hat{W}$ via the projection function $P_2$ and define a new $\hat{x} = P_2(P_1(x))$.
 
 We iteratively apply this process until no linear information remains in $\hat{x}$, i.e. a linear classifier is unable to predict the correct category $c$ with any probability greater than random chance. The final $\hat{x} = P_n(P_{n-1}(\dots P_1(x)))$ contains no linear information about the categories in $C$ and we call $P(x) = P_n(P_{n-1}(\dots P_1(x)))$ the guarding function. 
 
-We will pair the INLP method with the probing tasks described in sections 2.3 and 2.4 in order to create two guarding functions that will enable us to isolate components of BERT embeddings that contain syntax-specific and semantics-specific information. 
+We will pair the INLP method with the probing tasks described in sections \ref{sec:syntactic} and \ref{sec:semantics} in order to create two guarding functions that will enable us to isolate components of BERT embeddings that contain syntax-specific and semantics-specific information. 
 
 \subsection{Data}
+\label{sec:data}
 
 %Description of the data set used and the information it contains relevant to the tasks of interest. Talk about pre-processing the syntax trees to get CCG tags. 
-We will use the English V4 subset of the CoNLL 2012 shared task data\citep{2012-conll} . We must perform two pre-processing steps for this data to be used for our probing and evaluation tasks. The first is to apply \citet{ccg-bank}'s CCG Derivation algorithm to the parse tree field in the dataset, in order to create the CCG tags for each word. If this proves to be too time-consuming or computationally expensive then we shall change the syntactic probing task to utilize the POS tags available in the dataset, in place of CCG tags. The second task is to use the SRL frames in the dataset to generate (verb, BIO-argument-tag) pairs that will act as the categories for the semantic probing task. 
+We will use the English V4 subset of the CoNLL 2012 shared task data \citep{2012-conll} . We must perform two pre-processing steps for this data to be used for our probing and evaluation tasks. The first is to apply \citet{ccg-bank}'s CCG Derivation algorithm to the parse tree field in the dataset, in order to create the CCG tags for each word. If this proves to be too time-consuming or computationally expensive then we shall change the syntactic probing task to utilize the POS tags available in the dataset, in place of CCG tags. The second task is to use the SRL frames in the dataset to generate (verb, BIO-argument-tag) pairs that will act as the categories for the semantic probing task. 
 %cite CCG paper
 
 \subsection{Syntactic probing task}
+\label{sec:syntactic}
 
 The syntactic probing task involves training a linear classifier on the final layer BERT embeddings in order to predict the CCG tag associated with each word. We will use this classifier in the INLP algorithm in order to create a guarding function for the information that is necessary to complete the CCG labeling task. For a given embedding, the projection that results from applying this guarding function to the embedding will represent the non-syntactic information contained in the embedding and will from now on be referred to as the ``non-syntactic component'' of the embedding. We can then determine the ``syntactic component'' of the embedding by taking the difference of the embedding vector with the non-syntactic component. 
 
 \subsection{Semantic probing task}
+\label{sec:semantics}
 
 Similar to the above, the semantic probing tasks involves training a linear classifier on the final layer BERT embeddings in order to predict the semantic role tag (described in the data section) associated with each word. This classifier is used in the INLP algorithm in order to create a guarding function for the information necessary to complete the SRL labeling task. For this particular task, it is possible that a single word will have multiple SRL tags associated with it. In this case, we treat each (vector, SRL tag) pair as a single example in the dataset, in order to create a guarding function that works across all of the SRL tags affiliated with a particular word. As described in the Syntactic probing task section, we shall use the resulting guarding function to decompose the original embedding into a ``semantic component'' and a ``non-semantic component''. 
 
 \subsection{Evaluation tasks}
+\label{sec:eval}
 
 Our goal is to determine which information sets captured in the BERT embeddings are relevant for our evaluation tasks. We thus use the components derived from the probing tasks to create new embeddings that isolate specific types of information. These embeddings are then evaluated on the syntactic and semantic tasks that were used for probing, and their performance is compared to that of the original embeddings. 
 
@@ -112,7 +116,7 @@ Next, we consider the potential results of the various projected word embeddings
 
 \section{Divsion of Labor and Timeline}
 \label{sec:management}
-There are three main parts of this project, coding the experiment, presenting related topics in class and writing the final paper. Each part has detailed requirements along with due dates and been assigned to a member to take charge of as presented in table \ref{role description}. It is hard to anticipate the time consumed and difficulty of each task, so all the due dates are not final. We have set up a regular weekly meeting to update the progress of each part weekly so that everyone is on the same page with the development of the project. 
+There are three main parts of this project, coding the experiment, presenting related topics in class and writing the final paper. Each part has detailed requirements along with due dates and been assigned to a member to take charge of as presented in table \ref{role description}. It is hard to anticipate the time consumed and difficulty of each task, so all the due dates are temporary. We have set up a regular weekly meeting to update the progress of each part jso that everyone is on the same page with the development of the project. 
 
 \begin{table*}[h]
     \centering
@@ -141,7 +145,6 @@ There are three main parts of this project, coding the experiment, presenting re
 
 
 
-\pagebreak
 
 
 \bibliography{acl2020}
