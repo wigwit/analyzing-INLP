@@ -1,5 +1,5 @@
 import torch
-from transformers import BertModel, BertTokenizer,
+from transformers import BertModel, BertTokenizer
 
 import logging
 
@@ -11,11 +11,19 @@ model = BertModel.from_pretrained('bert-base-uncased',
 
 #load dataset
 from datasets import load_dataset
-dataset = load_dataset("conll2012_ontonotesv5")
+train_data = load_dataset("conll2012_ontonotesv5",'english_v12')['train']
 
-inputs = tokenizer(dataset, return_tensors="pt")
-outputs = model(**inputs)
-last_hidden_states = outputs.last_hidden_state
+#encode data into tokenizable format
+
+def encode(doc):
+    return {'sentences': doc['sentences']} #fix this to form a dict of lists of strings
+#also check how you did this last year
+#and maybe meet with qingxia if you need
+
+sentences = [sentence['words'] for doc in train_data for sentence in doc['sentences']]
+inputs = tokenizer(sentences, return_tensors="pt")
+
+#outputs = model(**inputs) #not sure when we need this
 
 #train the classifier on the tasks to return protected attributes
 
