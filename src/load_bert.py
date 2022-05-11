@@ -12,6 +12,8 @@ model = BertModel.from_pretrained('bert-base-uncased',
 #load dataset
 from datasets import load_dataset
 train_data = load_dataset("conll2012_ontonotesv5",'english_v12')['train']
+dev_data = load_dataset("conll2012_ontonotesv5",'english_v12')['validation']
+test_data = load_dataset("conll2012_ontonotesv5",'english_v12')['test']
 
 #encode data into tokenizable format
 
