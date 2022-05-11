@@ -42,7 +42,6 @@ train_seq,train_mask = bert_tokenization(train_input)
 # def words_of(dataset):
 #     return {'sentences': doc['sentences']} #fix this to form a dict of lists of strings
 #also check how you did this last year
-# and maybe meet with qingxia if you need
 # sentences = [sentence['words'] for doc in train_data for sentence in doc['sentences']]
 
 
