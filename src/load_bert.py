@@ -15,21 +15,23 @@ from typing import Dict, List
 ## defining tokenizer and bert model here
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased", use_fast=False)
 model = AutoModel.from_pretrained('bert-base-uncased')
-# for now i disable the hidden states function since we are only using bert to probe                                    
-# output_hidden_states = True, # Whether the model returns all hidden-states)
 
 
-
-def bert_tokenization(words):
+def bert_tokenization(words,max_len=75):
     '''
-    this is a tokenization function that takes in a df.series object 
+    this is a tokenization function that takes in a list object 
     and return a bert input format
     '''
     preprocessed_list = words
-    # this line of code is little buggy, will come back later
-    tokens = tokenizer(preprocessed_list,is_split_into_words=True)
-    input_seq = torch.tensor(tokens['input_ids'])
-    input_mask = torch.tensor(tokens['attention_mask'])
+    tokens = tokenizer(preprocessed_list,
+                    max_length=max_len,
+                    truncation=True,
+                    is_split_into_words=True,
+                    padding=True,
+                    return_tensors='pt')
+    
+    input_seq = tokens['input_ids']
+    input_mask = tokens['attention_mask']
     return input_seq, input_mask
 
 ## TODO: for Lindsay: please fill in the following function so that
@@ -45,28 +47,22 @@ def encoding_srl(srls:List[Dict]):
 train_df = pd.read_pickle('../data/train.pkl')
 train_input = train_df['words'].tolist()
 
-max_len = max([len(item) for item in train_input])
-
-
+seq_lens = [len(item) for item in train_input]
+## after doing some digging I decide to set max_len to be 75 to save computation
+## This is because the total instances = 66582 and filtered instances = 66364
+max_len = 75
+# filtered = [i for i in seq_lens if i <=75]
+# print(len(seq_lens))
+# print(len(filtered))
 
 train_pos = train_df['pos_tags'].tolist()
 
 ## For Lindsay: consider this as the possible input for the function
 train_srl = train_df['srl_frames'].tolist()
 
+## input for the model
+train_seq,train_mask = bert_tokenization(train_input)
 
-# #train_seq,train_mask = bert_tokenization(train_input_list)
-
-
-
-
-# def words_of(dataset):
-#     return {'sentences': doc['sentences']} #fix this to form a dict of lists of strings
-#also check how you did this last year
-# sentences = [sentence['words'] for doc in train_data for sentence in doc['sentences']]
-
-
-# inputs = tokenizer(sentences, return_tensors="pt")
 
 #outputs = model(**inputs) #not sure when we need this
 
