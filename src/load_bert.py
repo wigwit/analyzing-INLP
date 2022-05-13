@@ -2,7 +2,6 @@ import torch
 from transformers import AutoTokenizer, AutoModel
 import sys
 import logging
-from datasets import load_dataset
 import pandas as pd
 import itertools
 import pdb
