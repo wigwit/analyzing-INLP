@@ -6,6 +6,7 @@ from datasets import load_dataset
 import pandas as pd
 import itertools
 import pdb
+import json
 
 #logging.basicConfig(level-logging.INFO) #turn on detailed logging
 
@@ -23,9 +24,9 @@ def bert_tokenization(words):
     this is a tokenization function that takes in a df.series object 
     and return a bert input format
     '''
-    preprocessed_list = words.tolist()
+    preprocessed_list = words
     # this line of code is little buggy, will come back later
-    tokens = tokenizer(preprocessed_list,padding=True,is_split_into_words=True)
+    tokens = tokenizer(preprocessed_list,is_split_into_words=True)
     input_seq = torch.tensor(tokens['input_ids'])
     input_mask = torch.tensor(tokens['attention_mask'])
     return input_seq, input_mask
@@ -33,16 +34,19 @@ def bert_tokenization(words):
 
 # loading data from saved csv files
 train_df = pd.read_csv('../data/train.csv')
-train_input = train_df['words']
-max_len = [len(item) for item in train_input]
-len_pd=pd.Series(max_len)
-ax=len_pd.hist()
-fig = ax.get_figure()
-fig.savefig('train_dist.png')
-sys.exit()
-train_pos = train_df['pos_tags']
+## this is buggy since the datatype for this is str
+train_input = train_df['words'].tolist()
 
-train_seq,train_mask = bert_tokenization(train_input)
+train_input_list = [i.strip('][').split(',') for i in train_input]
+print(type(train_input_list[0]))
+max_len = [len(item) for item in train_input_list]
+print(max(max_len))
+
+
+train_pos = train_df['pos_tags']
+train_pos_list = [i.strip('][').split(',') for i in train_pos]
+
+train_seq,train_mask = bert_tokenization(train_input_list)
 
 
 
