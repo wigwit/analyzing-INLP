@@ -1,6 +1,7 @@
 from datasets import load_dataset
 import pandas as pd
 import itertools
+import pickle
 
 def from_ds_to_df(ds,filename=None):
     '''
@@ -13,7 +14,7 @@ def from_ds_to_df(ds,filename=None):
     df = pd.DataFrame(total_set)
     filtered_df = df[df['srl_frames'].str.len()>0]
     if filename is not None:
-        filtered_df.to_csv(filename)
+        filtered_df.to_pickle(filename)
     return filtered_df
 
 
@@ -23,6 +24,6 @@ train_data = load_dataset("conll2012_ontonotesv5",'english_v4')['train']['senten
 dev_data = load_dataset("conll2012_ontonotesv5",'english_v4')['validation']['sentences']
 test_data = load_dataset("conll2012_ontonotesv5",'english_v4')['test']['sentences']
 
-train_df = from_ds_to_df(train_data,'../data/train.csv')
-dev_df =from_ds_to_df(dev_data,'../data/dev.csv')
-test_df = from_ds_to_df(test_data,'../data/test.csv')
+train_df = from_ds_to_df(train_data,'../data/train.pkl')
+dev_df =from_ds_to_df(dev_data,'../data/dev.pkl')
+test_df = from_ds_to_df(test_data,'../data/test.pkl')

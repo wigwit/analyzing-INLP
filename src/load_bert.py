@@ -7,7 +7,8 @@ import pandas as pd
 import itertools
 import pdb
 import json
-
+import pickle
+from typing import Dict, List
 #logging.basicConfig(level-logging.INFO) #turn on detailed logging
 
 
@@ -31,22 +32,31 @@ def bert_tokenization(words):
     input_mask = torch.tensor(tokens['attention_mask'])
     return input_seq, input_mask
 
+## TODO: for Lindsay: please fill in the following function so that
+## we can derive the correct form
+def encoding_srl(srls:List[Dict]):
+    '''
+    This function is to encode srl so that it returns the encoded form
+    of SRL
+    '''
+    return None
 
-# loading data from saved csv files
-train_df = pd.read_csv('../data/train.csv')
-## this is buggy since the datatype for this is str
+# loading data from saved pickle files
+train_df = pd.read_pickle('../data/train.pkl')
 train_input = train_df['words'].tolist()
 
-train_input_list = [i.strip('][').split(',') for i in train_input]
-print(type(train_input_list[0]))
-max_len = [len(item) for item in train_input_list]
-print(max(max_len))
+max_len = max([len(item) for item in train_input])
 
 
-train_pos = train_df['pos_tags']
-train_pos_list = [i.strip('][').split(',') for i in train_pos]
 
-train_seq,train_mask = bert_tokenization(train_input_list)
+train_pos = train_df['pos_tags'].tolist()
+
+## For Lindsay: consider this as the possible input for the function
+train_srl = train_df['srl_frames'].tolist()
+
+
+# #train_seq,train_mask = bert_tokenization(train_input_list)
+
 
 
 
