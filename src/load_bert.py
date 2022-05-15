@@ -31,7 +31,7 @@ def bert_tokenization(words,max_len=75):
     
     input_seq = tokens['input_ids']
     input_mask = tokens['attention_mask']
-    return input_seq, input_mask
+    return input_seq, input_mask,tokens
 
 ## TODO: for Lindsay: please fill in the following function so that
 ## we can derive the correct form
@@ -60,7 +60,14 @@ train_pos = train_df['pos_tags'].tolist()
 train_srl = train_df['srl_frames'].tolist()
 
 ## input for the model
-train_seq,train_mask = bert_tokenization(train_input)
+train_seq,train_mask,train_tokens = bert_tokenization(train_input)
+
+model.eval()
+
+outputs = model(train_seq,attention_mask=train_mask)
+
+embeddings = outputs[0]
+print(embeddings.shape)
 
 
 #outputs = model(**inputs) #not sure when we need this
