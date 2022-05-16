@@ -10,10 +10,14 @@ import pickle
 from typing import Dict, List
 #logging.basicConfig(level-logging.INFO) #turn on detailed logging
 
+## defining GPU here
+device = torch.device("cuda")
 
 ## defining tokenizer and bert model here
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased", use_fast=False)
 model = AutoModel.from_pretrained('bert-base-uncased')
+model = model.to(device)
+
 
 
 def bert_tokenization(words,max_len=75):
@@ -61,6 +65,9 @@ train_srl = train_df['srl_frames'].tolist()
 
 ## input for the model
 train_seq,train_mask,train_tokens = bert_tokenization(train_input)
+train_seq = train_seq.to(device)
+train_mask = train_mask.to(device)
+train_tokens=train_tokens.to(device)
 
 model.eval()
 
