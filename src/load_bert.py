@@ -11,6 +11,7 @@ from typing import Dict, List
 #logging.basicConfig(level-logging.INFO) #turn on detailed logging
 
 ## defining GPU here
+
 device = torch.device("cuda")
 
 ## defining tokenizer and bert model here
@@ -35,7 +36,7 @@ def bert_tokenization(words,max_len=75):
     
     input_seq = tokens['input_ids']
     input_mask = tokens['attention_mask']
-    return input_seq, input_mask,tokens
+    return input_seq, input_mask
 
 ## TODO: for Lindsay: please fill in the following function so that
 ## we can derive the correct form
@@ -64,14 +65,18 @@ train_pos = train_df['pos_tags'].tolist()
 train_srl = train_df['srl_frames'].tolist()
 
 ## input for the model
-train_seq,train_mask,train_tokens = bert_tokenization(train_input)
+train_seq,train_mask = bert_tokenization(train_input)
 train_seq = train_seq.to(device)
 train_mask = train_mask.to(device)
-train_tokens=train_tokens.to(device)
+
+# freeze all the parameters
+for param in model.parameters():
+    param.requires_grad = False
 
 model.eval()
 
-outputs = model(train_seq,attention_mask=train_mask)
+with torch.no_grad():
+    outputs = model(train_seq,attention_mask=train_mask)
 
 embeddings = outputs[0]
 print(embeddings.shape)
