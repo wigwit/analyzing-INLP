@@ -1,3 +1,4 @@
+from re import M
 import torch
 from transformers import AutoTokenizer, AutoModel
 import sys
@@ -8,6 +9,7 @@ import pdb
 import json
 import pickle
 from typing import Dict, List
+#from nltk.stem import WordNetLemmatizer
 #logging.basicConfig(level-logging.INFO) #turn on detailed logging
 
 ## defining GPU here
@@ -40,12 +42,47 @@ def bert_tokenization(words,max_len=75):
 
 ## TODO: for Lindsay: please fill in the following function so that
 ## we can derive the correct form
-def encoding_srl(srls:List[Dict]):
+
+#wnl = WordNetLemmatizer()
+
+def encoding_srl(srls:List[Dict], srl_ref=None):
     '''
-    This function is to encode srl so that it returns the encoded form
-    of SRL
+    This function returns the encoded form of the SRL categories
+    and an ordered dictionary for reference. The encoded SRL is a
+    list where each entry contains a list of the SRL integer values 
+    for the corresponding word. srl_ref is an ordered dictionary 
+    whose keys correspond to SRL categories, which can be identified 
+    by the integers corresponding to their positions/values. For 
+    evaluation purposes we can provide a pre-defined srl_ref; all 
+    SRL categories not seen during training should be categorized
+    as 'unk'.
     '''
-    return None
+    train_ref = False
+    if srl_ref is None: 
+        srl_ref = {'unk':0}
+        srl_ind = 1
+        train_ref = True
+    res = []
+    for sent in srls:
+        sent_res = [[] for i in range(len(sent[0]['frames']))]
+        for i in range(len(sent)):
+            vb = sent[i]['verb']
+            #vb = wnl.lemmatize(vb,'v')
+            for j in range(len(sent_res)):
+                if sent[i]['frames'][j] != 'O':
+                    fr = sent[i]['frames'][j][2:]
+                    srl_key = vb + "_" + fr
+                    if srl_key in srl_ref.keys():
+                        n = srl_ref[srl_key]
+                    elif train_ref:
+                        srl_ref[srl_key] = srl_ind
+                        n = srl_ind
+                        srl_ind += 1
+                    else:
+                        n = 0
+                    sent_res[j].append(n)
+        res.append(sent_res)
+    return srl_ref, res
 
 # loading data from saved pickle files
 train_df = pd.read_pickle('../data/train.pkl')
