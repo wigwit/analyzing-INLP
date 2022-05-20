@@ -289,3 +289,6 @@ data/test.csv
 *run.log
 *run.out
 *run.error
+
+# pycharm thing
+.idea
