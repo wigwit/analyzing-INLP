@@ -9,12 +9,13 @@ import pdb
 import json
 import pickle
 from typing import Dict, List
+from utils import bert_tokenization
 #from nltk.stem import WordNetLemmatizer
 #logging.basicConfig(level-logging.INFO) #turn on detailed logging
 
 ## defining GPU here
 
-device = torch.device("cuda")
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device('cpu')
 
 ## defining tokenizer and bert model here
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased", use_fast=False)
@@ -23,22 +24,6 @@ model = model.to(device)
 
 
 
-def bert_tokenization(words,max_len=75):
-    '''
-    this is a tokenization function that takes in a list object 
-    and return a bert input format
-    '''
-    preprocessed_list = words
-    tokens = tokenizer(preprocessed_list,
-                    max_length=max_len,
-                    truncation=True,
-                    is_split_into_words=True,
-                    padding=True,
-                    return_tensors='pt')
-    
-    input_seq = tokens['input_ids']
-    input_mask = tokens['attention_mask']
-    return input_seq, input_mask
 
 ## TODO: for Lindsay: please fill in the following function so that
 ## we can derive the correct form
@@ -102,7 +87,7 @@ train_pos = train_df['pos_tags'].tolist()
 train_srl = train_df['srl_frames'].tolist()
 
 ## input for the model
-train_seq,train_mask = bert_tokenization(train_input)
+tokens, train_seq,train_mask = bert_tokenization(train_input, tokenizer)
 train_seq = train_seq.to(device)
 train_mask = train_mask.to(device)
 
@@ -114,19 +99,5 @@ model.eval()
 
 with torch.no_grad():
     outputs = model(train_seq,attention_mask=train_mask)
-
-embeddings = outputs[0]
-print(embeddings.shape)
-
-
-#outputs = model(**inputs) #not sure when we need this
-
-#train the classifier on the tasks to return protected attributes
-
-#use last_hidden_states and protected attributes as input for INLP loop
-
-
-
-
 
 
