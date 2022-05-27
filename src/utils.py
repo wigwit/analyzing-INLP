@@ -75,3 +75,19 @@ def remove_random_directions(x: np.ndarray, num_of_directions: int) -> np.ndarra
     return x_rand_direction
 
 
+def bert_tokenization(words,tokenizer, max_len=75):
+    '''
+    this is a tokenization function that takes in a list object 
+    and return a bert input format
+    '''
+    preprocessed_list = words
+    tokens = tokenizer(preprocessed_list,
+                    max_length=max_len,
+                    truncation=True,
+                    is_split_into_words=True,
+                    padding=True,
+                    return_tensors='pt')
+    
+    input_seq = tokens['input_ids']
+    input_mask = tokens['attention_mask']
+    return tokens, input_seq, input_mask
