@@ -50,22 +50,26 @@ for i in range(len(word_inds)):
 	d = defaultdict(list)
 	for ind,emb in zip(word_inds[i], outputs['last_hidden_state'][i]):
 		if isinstance(ind, int):
-			d[ind].append(emb
+			d[ind].append(emb)
 	d_list.append(d) 
 embeddings = torch.stack([torch.mean(torch.stack(d_list[i][j],0),0) if len(d_list[i][j]) > 1 else d_list[i][j][0] for i in range(len(d_list)) for j in d_list[i].keys()], 0)
-y = torch.FloatTensor([item for sublist in train_pos for item in sublist])
+#y = torch.FloatTensor([item for sublist in train_pos for item in sublist])
+y = torch.tensor([item for sublist in train_pos for item in sublist], dtype=torch.long)
 
 #train the linear classifier
+num_epochs = 3
 num_tags = 49 
 input_dim = 768
 linear_model = torch.nn.Linear(input_dim,num_tags)
-criterion = torch.nn.MSELoss(size_average = False)
+#criterion = torch.nn.MSELoss(size_average = False)
+#criterion = torch.nn.MSELoss(reduction='sum')
+criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(linear_model.parameters(), lr = 0.01)
 for epoch in range(num_epochs):
 	y_pred = linear_model(embeddings)
 	loss = criterion(y_pred,y) 
 	optimizer.zero_grad()
-	loss.backward()
+	loss.backward(retain_graph=True)
 	optimizer.step()
 	print(f'epoch: {epoch+1}, loss = {loss.item():.4f}')
 
