@@ -38,9 +38,16 @@ train_srl = train_df['srl_frames'].tolist()
 
 ## input for the model
 tokens, train_seq,train_mask = bert_tokenization(train_input, tokenizer)
+#UNCOMMENT FOR TESTING WITH FIRST FIVE SENTENCES
+#train_seq = train_seq[:5] 
+#train_mask = train_mask[:5] 
+#train_pos = train_pos[:5]
 
 outputs = model(train_seq,attention_mask = train_mask)
 word_inds = [tokens.words(i) for i in range(tokens['input_ids'].shape[0])]
+
+#UNCOMMENT FOR TESTING WITH FIRST FIVE SENTENCES
+#word_inds = word_inds[:5]
 
 #convert to list of embeddings
 d_list = []
