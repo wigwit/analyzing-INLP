@@ -2,6 +2,8 @@ from typing import List
 
 import numpy as np
 import scipy
+import scipy.linalg
+import torch
 
 
 # the following three methods are created by the original INLP authors
@@ -91,3 +93,18 @@ def bert_tokenization(words,tokenizer, max_len=75):
     input_seq = tokens['input_ids']
     input_mask = tokens['attention_mask']
     return tokens, input_seq, input_mask
+
+def train_linear_classifier(X, y, num_epochs, num_tags, input_dim):
+	linear_model = torch.nn.Linear(input_dim,num_tags)
+	criterion = torch.nn.CrossEntropyLoss()
+	optimizer = torch.optim.SGD(linear_model.parameters(), lr = 0.01)
+	for epoch in range(num_epochs):
+		logits = linear_model(X)
+		loss = criterion(logits,y) 
+		optimizer.zero_grad()
+		loss.backward(retain_graph=True)
+		optimizer.step()
+		print(f'epoch: {epoch+1}, loss = {loss.item():.4f}')
+	predictions = logits.argmax(axis=1)
+	accuracy = predictions.float().mean()
+	return linear_model, accuracy
