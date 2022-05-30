@@ -9,13 +9,16 @@ import json
 import pickle
 from typing import Dict, List
 from collections import defaultdict
-from utils import bert_tokenization, get_projection_to_intersection_of_nullspaces, get_rowspace_projection 
+from utils import bert_tokenization, get_projection_to_intersection_of_nullspaces, get_rowspace_projection, train_linear_classifier
+import numpy as np
+from tqdm import tqdm
 #logging.basicConfig(level-logging.INFO) #turn on detailed logging
 
 ## defining GPU here
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device('cpu')
 
+#load data and BERT embeddings as in load_bert.py
 ## defining tokenizer and bert model here
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased", use_fast=True)
 model = AutoModel.from_pretrained('bert-base-uncased')
@@ -26,12 +29,7 @@ train_df = pd.read_pickle('../data/train.pkl')
 train_input = train_df['words'].tolist()
 
 seq_lens = [len(item) for item in train_input]
-## after doing some digging I decide to set max_len to be 75 to save computation
-## This is because the total instances = 66582 and filtered instances = 66364
 max_len = 75
-# filtered = [i for i in seq_lens if i <=75]
-# print(len(seq_lens))
-# print(len(filtered))
 
 train_pos = train_df['pos_tags'].tolist()
 
@@ -53,40 +51,32 @@ for i in range(len(word_inds)):
 			d[ind].append(emb)
 	d_list.append(d) 
 embeddings = torch.stack([torch.mean(torch.stack(d_list[i][j],0),0) if len(d_list[i][j]) > 1 else d_list[i][j][0] for i in range(len(d_list)) for j in d_list[i].keys()], 0)
-#y = torch.FloatTensor([item for sublist in train_pos for item in sublist])
 y = torch.tensor([item for sublist in train_pos for item in sublist], dtype=torch.long)
+#(not doing srl yet)
 
-#train the linear classifier
+#set variables for INLP loop
 num_epochs = 3
-num_tags = 49 
-input_dim = 768
-linear_model = torch.nn.Linear(input_dim,num_tags)
-#criterion = torch.nn.MSELoss(size_average = False)
-#criterion = torch.nn.MSELoss(reduction='sum')
-criterion = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(linear_model.parameters(), lr = 0.01)
-for epoch in range(num_epochs):
-	y_pred = linear_model(embeddings)
-	loss = criterion(y_pred,y) 
-	optimizer.zero_grad()
-	loss.backward(retain_graph=True)
-	optimizer.step()
-	print(f'epoch: {epoch+1}, loss = {loss.item():.4f}')
+num_tags = 49
+input_dim = embeddings.shape[1] #should be 768
+orig_embeddings = embeddings
+Ws = []
+rowspace_projections = []
+INLP_iterations = 10 #arbitrary choice for now
+min_accuracy = 0.0 #can tune this as well
 
-#calculate nullspace
-#find orthogonal projection matrix
-#do the projection
-
-#null space projection:
-def run_inlp(linear_model):
-	#returns projection matrix
-	Ws = []
-	rowspace_projections = []
-	W = linear_model.get_weights()
+#INLP loop
+for i in tqdm(range(INLP_iterations)):
+	#y are the gold standard labels for pos or srl
+	linear_model, accuracy = train_linear_classifier(embeddings, y, num_epochs, num_tags, input_dim) #train linear classifier
+	if accuracy < min_accuracy:
+		continue 
+	W = linear_model.weight
 	Ws.append(W)
-	P_rowspace_wi = get_rowspace_projection(W) # projection to W's rowspace
+	P_rowspace_wi = get_rowspace_projection(W.detach()) #projection to W's rowspace
 	rowspace_projections.append(P_rowspace_wi)
 	P = get_projection_to_intersection_of_nullspaces(rowspace_projections, input_dim)
-	return P
+	embeddings = torch.tensor(P.dot(embeddings.detach().T).T, dtype = torch.float32) #project the embeddings
 
-#so how do we et the guarded data then?
+final_projection_matrix = P
+guarded_embeddings = embeddings
+ 
