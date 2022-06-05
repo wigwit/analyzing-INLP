@@ -10,11 +10,11 @@ The code is able to run in `Python 3.9` with appropiate requirement in `environm
 User could choose to evaluate the model's performance on either ccg-tagging task or semantic role labeling task on the 
 word embeddings that have either the ccg information or srl information removed using INLP. <br>
 Example command for finetuning the prob for srl-tagging task using embedding without ccg information: 
-````commandline
-$ ./src/eval/eval.sh train -rc -es
+````shell
+$ ./src/eval/eval.sh train -c -r
 ````
 Example command for evaluation of ccg-tagging task performance using embedding without srl information: 
-````commandline
-$ ./src/eval/eval.sh eval -rs -ec
+```` shell
+$ ./src/eval/eval.sh evaluate -s -g
 ````
 Use the `-h` flag to get help.
