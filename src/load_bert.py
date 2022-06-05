@@ -70,24 +70,28 @@ def encoding_srl(srls:List[Dict], srl_ref=None):
     return srl_ref, res
 
 # loading data from saved pickle files
-train_df = pd.read_pickle('../data/train.pkl')
-train_input = train_df['words'].tolist()
+train_df = pd.read_pickle('../data/pmb_gold/gold_train.pkl')
+train_input = train_df['text'].tolist()
 
 seq_lens = [len(item) for item in train_input]
 ## after doing some digging I decide to set max_len to be 75 to save computation
 ## This is because the total instances = 66582 and filtered instances = 66364
-max_len = 75
+max_len = 32
 # filtered = [i for i in seq_lens if i <=75]
 # print(len(seq_lens))
 # print(len(filtered))
 
-train_pos = train_df['pos_tags'].tolist()
+train_ccg = train_df['ccg_tags'].tolist()
 
-## For Lindsay: consider this as the possible input for the function
-train_srl = train_df['srl_frames'].tolist()
+train_st = train_df['semantics_tags'].tolist()
 
 ## input for the model
-tokens, train_seq,train_mask = bert_tokenization(train_input, tokenizer)
+tokens, train_seq,train_mask = bert_tokenization(train_input, tokenizer,max_len=32)
+# print(train_seq,train_mask)
+# print(train_input[30])
+# detok = tokenizer.decode(train_seq[0])
+# print(detok)
+# sys.exit()
 train_seq = train_seq.to(device)
 train_mask = train_mask.to(device)
 
@@ -99,5 +103,16 @@ model.eval()
 
 with torch.no_grad():
     outputs = model(train_seq,attention_mask=train_mask)
+
+
+train_output = outputs[0].detach().cpu()
+# print(train_output[0])
+# print(train_output[0].shape)
+# print(train_input[0])
+# print(train_mask[0])
+
+# sys.exit()
+
+torch.save(train_output,'../data/pmb_gold/gold_train_embeddings.pt')
 
 

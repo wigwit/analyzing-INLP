@@ -2,7 +2,7 @@
 
 source ~/anaconda3/etc/profile.d/conda.sh
 
-conda activate 573
+conda activate news_emo
 
 python load_bert.py
  
