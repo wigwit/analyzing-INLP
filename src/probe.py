@@ -16,83 +16,91 @@ from sklearn import preprocessing
 from LinearClassifier import LinearClassifier
 #logging.basicConfig(level-logging.INFO) #turn on detailed logging
 
-## defining GPU here
 
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device('cpu')
+def from_sents_to_words(input_df,task_keyword,tokens,output):
+	'''
+	this function checks the tokenization process and transfer data into word level
+	Arguments:
+		input_df: a pd.DataFrame object
+		task_keyword: {syn,sem}
+		tokens: bert tokenized object
+		output: a tensor with shape (sentence num, max_seq_len, embedding dim)
+	Returns: 
+		embeddings: a tensor with shape (word num, embedding dim)
+		y: a tensor with shape (word num,1)
+	'''
+	input_text = input_df['text'].tolist()
+	if task_keyword == 'syn':
+		input_y = input_df['ccg_tags'].tolist()
+	else:
+		input_y = input_df['semantics_tags'].tolist()
+	label_encoder = preprocessing.LabelEncoder()
+	label_encoder.fit(np.concatenate(input_y))
+	encoded_y = [label_encoder.transform(l) for l in input_y]
+	## mapping tokens back to word ids
+	word_inds = [tokens.word_ids(i) for i in range(len(input_y))]
+	d_list = []
+	embed_by_sent = []
+	skip_ind = []
+	for i in range(len(word_inds)):
+		d = defaultdict(list)
+		for ind,emb in zip(word_inds[i], output[i]):
+			if isinstance(ind, int):
+				d[ind].append(emb)
+	
+		word_in_sent = [torch.mean(torch.stack(d[k],0),0) if len(d[k])>1 else d[k][0] for k in d.keys()]
+		if len(word_in_sent)!= len(input_text[i]):
+			skip_ind.append(i)
+			continue
+		embed_by_sent.append(torch.stack(word_in_sent,0))
+		d_list.append(d)
+	embeddings = torch.cat(embed_by_sent)
+	y = torch.tensor([item for i, sublist in enumerate(encoded_y) if i not in skip_ind for item in sublist ], dtype=torch.long)
+	return embeddings,y
 
-#load data and BERT embeddings as in load_bert.py
-## defining tokenizer and bert model here
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased", use_fast=True)
-# model = AutoModel.from_pretrained('bert-base-uncased')
-# model = model.to(device)
+
+	
 
 # loading data from saved pickle files
 train_df = pd.read_pickle('../data/pmb_gold/gold_train.pkl')
-#train_df =train_df[:1000]
 train_input = train_df['text'].tolist()
 
+dev_df=pd.read_pickle('../data/pmb_gold/gold_dev.pkl')
+dev_input=dev_df['text'].tolist()
+## tokenization
+tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased', use_fast=True)
+train_tokens,train_seq,train_mask = bert_tokenization(train_input, tokenizer)
+dev_tokens,dev_seq,dev_mask = bert_tokenization(dev_input,tokenizer)
 
-train_ccg = train_df['ccg_tags'].tolist()
-
-train_words=train_df['text'].tolist()
-count_words= [len(l) for l in train_words]
-
-ccg_encoder = preprocessing.LabelEncoder()
-ccg_encoder.fit(np.concatenate(train_ccg))
-
-ccg_output =[ ccg_encoder.transform(l) for l in train_ccg]
-
-train_st = train_df['semantics_tags'].tolist()
-
-# ## input for the model
-tokens, train_seq,train_mask = bert_tokenization(train_input, tokenizer)
+## TODO: adding a functionality here to load or output directly
 # #tokens = tokens.to(device)
 # train_seq = train_seq.to(device)
 # train_mask = train_mask.to(device)
-
 # outputs = model(train_seq,attention_mask = train_mask)
-output = torch.load('../data/pmb_gold/gold_train_embeddings.pt')
-# output = output[:1000]
-word_inds = [tokens.words(i) for i in range(train_seq.shape[0])]
+train_output = torch.load('../data/pmb_gold/gold_train_embeddings.pt')
+dev_output = torch.load('../data/pmb_gold/gold_dev_embeddings.pt')
 
-#convert to list of embeddings
-d_list = []
-embed_by_sent = []
-skip_ind = []
-for i in range(len(word_inds)):
-	d = defaultdict(list)
-	for ind,emb in zip(word_inds[i], output[i]):
-		if isinstance(ind, int):
-			d[ind].append(emb)
-	
-	word_in_sent = [torch.mean(torch.stack(d[k],0),0) if len(d[k])>1 else d[k][0] for k in d.keys()]
-	if len(word_in_sent)!= count_words[i]:
-		skip_ind.append(i)
-		continue
-	embed_by_sent.append(torch.stack(word_in_sent,0))
-	d_list.append(d) 
-# 30k*768
-embeddings = torch.cat(embed_by_sent)
-# 30k*1
-y = torch.tensor([item for i, sublist in enumerate(ccg_output) if i not in skip_ind for item in sublist ], dtype=torch.long)
+train_embeddings,train_y = from_sents_to_words(train_df,'sem',train_tokens,train_output)
+dev_embeddings,dev_y = from_sents_to_words(dev_df,'sem',dev_tokens,dev_output)
 
-#(not doing srl yet)
-#print(count_words)
-# print(embeddings.shape)
-# print(y.shape)
-# sys.exit()
-#set variables for INLP loop
+# print(train_embeddings.shape)
+# print(train_y.shape)
+# print(dev_embeddings.shape)
+# print(dev_y.shape)
+
 num_epochs = 100
-num_tags = len(ccg_encoder.classes_)
-input_dim = embeddings.shape[1] #should be 768
-orig_embeddings = embeddings
+num_tags = len(np.unique(train_y.numpy()))
+input_dim = train_embeddings.shape[1] #should be 768
 
-lin_class = LinearClassifier(embeddings,y,num_tags)
-lin_class.optimize()
-lin_class.optimize()
-lin_class.optimize()
+
+lin_class = LinearClassifier(train_embeddings,train_y,num_tags,dev_x=dev_embeddings,dev_y=dev_y)
+print(lin_class.dev_x.shape)
+print(num_tags)
+#print(lin_class.output.shape)
+bm=lin_class.optimize()
 sys.exit()
 
+orig_embeddings = train_embeddings
 Ws = []
 rowspace_projections = []
 INLP_iterations = 3 #arbitrary choice for now
