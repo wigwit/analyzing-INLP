@@ -11,10 +11,10 @@ User could choose to evaluate the model's performance on either ccg-tagging task
 word embeddings that have either the ccg information or srl information removed using INLP. <br>
 Example command for finetuning the prob for srl-tagging task using embedding without ccg information: 
 ````shell
-$ ./src/eval/eval.sh train -c -r
+$ ./src/eval.sh train -c -r
 ````
 Example command for evaluation of ccg-tagging task performance using embedding without srl information: 
 ```` shell
-$ ./src/eval/eval.sh evaluate -s -g
+$ ./src/eval.sh evaluate -s -g
 ````
 Use the `-h` flag to get help.
