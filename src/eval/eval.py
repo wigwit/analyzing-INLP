@@ -1,7 +1,8 @@
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 from EvalClassifier import EvalClassifier
-
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+from os.path import exists
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -11,7 +12,8 @@ def load_data(x: torch.Tensor, y: torch.Tensor, n_batches: int = 64, shuffle: bo
     return data_loader
 
 
-def train(model: torch.nn.Module, cp: str, train_loader: DataLoader, dev_loader: DataLoader, epochs: int, lr: float = 0.005):
+def train(model: torch.nn.Module, cp: str, train_loader: DataLoader, dev_loader: DataLoader, epochs: int,
+          lr: float = 0.005):
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
     dev_losses = []
@@ -28,7 +30,7 @@ def train(model: torch.nn.Module, cp: str, train_loader: DataLoader, dev_loader:
         if epoch == 0:
             torch.save(model.state_dict(), cp)
         else:
-            if dev_losses[epoch] < dev_losses[epoch - 1]:
+            if dev_losses[epoch] <= dev_losses[epoch - 1]:
                 torch.save(model.state_dict(), cp)
 
 
@@ -51,9 +53,9 @@ def evaluate(model: torch.nn.Module, test_loader: torch.utils.data.DataLoader,
     return eval_accu, eval_loss
 
 
-def run_train(load: bool, model_path: str, x: torch.Tensor, y: torch.Tensor, dev_x: torch.Tensor, dev_y: torch.Tensor):
+def run_train(model_path: str, x: torch.Tensor, y: torch.Tensor, dev_x: torch.Tensor, dev_y: torch.Tensor):
     model = EvalClassifier(x.shape[1], y.shape[1])
-    if load:
+    if exists(model_path):
         model.load_state_dict(torch.load(model_path, map_location=device))
     train_loader = load_data(x, y)
     dev_loader = load_data(dev_x, dev_y)
@@ -69,19 +71,45 @@ def run_eval(model_path: str, eval_x: torch.Tensor, eval_y: torch.Tensor):
 
 
 def __main__():
-    load_model = False
-    train_model = True
-    eval_model = False
-    model_path = 'model.checkpoint'
-    # training_path = 'data/pmb_gold/gold_train.pkl'
+    parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument('mode', choices=('train', 'eval'), help='what to run')
+    r_group = parser.add_mutually_exclusive_group(required=True)
+    r_group.add_argument('-rc', '--remove_ccg', action='store_true', help='remove ccg information')
+    r_group.add_argument('-rs', '--remove_srl', action='store_true', help='remove srl information')
+    e_group = parser.add_mutually_exclusive_group(required=True)
+    e_group.add_argument('-ec', '--eval_ccg', action='store_true', help='evaluate on ccf tagging task')
+    e_group.add_argument('-es', '--eval_srl', action='store_true', help='evaluate on srl tagging task')
+    parser.add_argument('-sd', '--save_dir', action='store', help='model weight location',
+                        default='src/eval/models')
+
+    args = parser.parse_args()
+
     rand_x1 = torch.rand((1000, 768), device=device)
     rand_y1 = torch.randint(low=0, high=11, size=(1000, 1), dtype=torch.float, device=device)
     rand_x2 = torch.rand((100, 768), device=device)
     rand_y2 = torch.randint(low=0, high=11, size=(100, 1), dtype=torch.float, device=device)
-    if train_model:
-        run_train(load_model, model_path, rand_x1, rand_y1, rand_x2, rand_y2)
+
+    if args.remove_ccg:
+        model_path = args.save_dir + '/ccg_'
+        # TODO load embedding
+        # embedding = torch.load(--CCG_EMBEDDING--)
+    else:
+        model_path = args.save_dir + '/srl_'
+        # TODO load embedding
+        # embedding = torch.load(--SRL_EMBEDDING--)
+    if args.eval_ccg:
+        model_path = model_path + 'ccg.pt'
+        # TODO: load output
+        # embedding = torch.load(--CCG_OUTPUT--)
+    else:
+        model_path = model_path + 'srl.pt'
+        # TODO: load output
+        # embedding = torch.load(--SRL_OUTPUT--)
+
+    if args.mode == 'train':
+        run_train(model_path, rand_x1, rand_y1, rand_x2, rand_y2)
     #  TODO options: load model/train new model, use ccg data or use srl data, train for ccg or train for srl
-    if eval_model:
+    if args.mode == 'eval':
         run_eval(model_path, rand_x2, rand_y2)
     #  TODO options: ccg-ccg, ccg-srl, srl-srl, srl-ccg
 
