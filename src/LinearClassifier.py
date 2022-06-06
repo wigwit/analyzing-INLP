@@ -93,8 +93,7 @@ class INLPTraining(LinearClassifier):
 		:param rowspace_projection_matrices: List[np.array], a list of rowspace projections
 		:param input_dim: input dim
 		"""
-		# This is werid because rowspace is not null space
-
+		# This is werid because Q is not normalized so the N(P) = I-P does not work
 		I = np.eye(self.input_dim)
 		Q = np.sum(rowspace_projection_matrices, axis=0)
 		P = I - self.get_rowspace_projection(Q)
