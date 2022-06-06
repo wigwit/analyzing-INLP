@@ -14,6 +14,7 @@ import numpy as np
 from tqdm import tqdm
 from sklearn import preprocessing
 from LinearClassifier import LinearClassifier, INLPTraining
+from eval_classifier import EvalClassifier
 #logging.basicConfig(level-logging.INFO) #turn on detailed logging
 
 
@@ -80,22 +81,33 @@ dev_tokens,dev_seq,dev_mask = bert_tokenization(dev_input,tokenizer)
 train_output = torch.load('../data/pmb_gold/gold_train_embeddings.pt')
 dev_output = torch.load('../data/pmb_gold/gold_dev_embeddings.pt')
 
-train_embeddings,train_y = from_sents_to_words(train_df,'syn',train_tokens,train_output)
-dev_embeddings,dev_y = from_sents_to_words(dev_df,'syn',dev_tokens,dev_output)
+train_embeddings,train_y = from_sents_to_words(train_df,'sem',train_tokens,train_output)
+dev_embeddings,dev_y = from_sents_to_words(dev_df,'sem',dev_tokens,dev_output)
 
-
+# l=train_y.tolist()
+# import collections
+# print(collections.Counter(l))
+# print(len(l))
+# sys.exit()
 # print(train_embeddings.shape)
 # print(train_y.shape)
 # print(dev_embeddings.shape)
 # print(dev_y.shape)
 
-print(dev_embeddings.dtype)
+#print(dev_embeddings.dtype)
 num_epochs = 100
 num_tags = len(np.unique(train_y.numpy()))
 input_dim = train_embeddings.shape[1] #should be 768
 
-inlp_syn = INLPTraining(train_embeddings,train_y,num_tags,dev_x=dev_embeddings,dev_y=dev_y)
-inlp_syn.run_INLP_loop(10)
+# sem_test = LinearClassifier(train_embeddings,train_y,num_tags)
+# sem_test.optimize()
+# eval_test = EvalClassifier(train_embeddings,train_y,num_tags,dev_embeddings,dev_y)
+# eval_test.optimize(batch_size=1000)
+inlp_syn = INLPTraining(train_embeddings,train_y,num_tags)
+P,P_is,Ws=inlp_syn.run_INLP_loop(10)
+print(f'the rank of P is :{np.linalg.matrix_rank(P)}')
+for P_i in P_is:
+	print(np.linalg.matrix_rank(P_i))
 sys.exit()
 # lin_class = LinearClassifier(train_embeddings,train_y,num_tags,dev_x=dev_embeddings,dev_y=dev_y)
 # print(lin_class.dev_x.shape)

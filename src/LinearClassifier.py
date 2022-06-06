@@ -43,7 +43,7 @@ class LinearClassifier(torch.nn.Module):
 			optimizer.zero_grad()
 			loss.backward(retain_graph=True)
 			optimizer.step()
-			print(f'epoch: {epoch+1}, loss = {loss.item():.4f}')
+			#print(f'epoch: {epoch+1}, loss = {loss.item():.4f}')
 			#implement stopping criterion
 			if loss.item()<best_loss:
 				best_loss=loss.item()
@@ -60,7 +60,7 @@ class LinearClassifier(torch.nn.Module):
 		#final_out = output.numpy()
 		#dev_out = self.dev_y.numpy()
 		train_acc = accuracy_score(self.output.numpy(),final_pred)
-		print(f'train accuracy score:{train_acc:.4f}')
+		#print(f'train accuracy score:{train_acc:.4f}')
 		#print(f'dev accuracy score:{accuracy_score(self.dev_y.numpy(),final_dev):.4f}')
 			
 		return best_model,train_acc
@@ -79,7 +79,7 @@ class INLPTraining(LinearClassifier):
 		if np.allclose(W, 0):
 			w_basis = np.zeros_like(W.T)
 		else:
-			w_basis = scipy.linalg.orth(W.T) # orthogonal basis
+			w_basis = scipy.linalg.orth(W.T) # orthogonal basis 
 		w_basis = w_basis * np.sign(w_basis[0][0]) # handle sign ambiguity
 		P_W = w_basis.dot(w_basis.T) # orthogonal projection on W's rowspace
 		return P_W
@@ -93,6 +93,7 @@ class INLPTraining(LinearClassifier):
 		:param rowspace_projection_matrices: List[np.array], a list of rowspace projections
 		:param input_dim: input dim
 		"""
+		# This is werid because rowspace is not null space
 
 		I = np.eye(self.input_dim)
 		Q = np.sum(rowspace_projection_matrices, axis=0)
@@ -113,6 +114,7 @@ class INLPTraining(LinearClassifier):
 
 	def run_INLP_loop(self,iteration,min_acc=0.0):
 		I = np.eye(self.input_dim)
+		P = I
 		Ws = []
 		rowspace_projections = []
 		for i in range(iteration):
@@ -124,10 +126,15 @@ class INLPTraining(LinearClassifier):
 				continue
 			W = bm.weight.detach().numpy()
 			Ws.append(W)
+			# Noted this is the projection space for W, not the null space
 			P_rowspace_wi = self.get_rowspace_projection(W)
 			rowspace_projections.append(P_rowspace_wi)
-			# Maybe should be optional, but it is described in the original
-			P = self.get_projection_to_intersection_of_nullspaces(rowspace_projections)
+			# This line is supposed to get the null space for the projection space of W
+			# Intuitively I think the rank makes sense, but I don't know how this will hold
+			P_Nwi = I - P_rowspace_wi
+			# This line is what they showed originally but the function looks weird
+			#P = self.get_projection_to_intersection_of_nullspaces(rowspace_projections)
+			P = np.matmul(P_Nwi,P)
 			self.apply_projection(P)
 		
 		return P, rowspace_projections, Ws
