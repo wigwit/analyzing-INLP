@@ -13,7 +13,7 @@ from utils import bert_tokenization, get_projection_to_intersection_of_nullspace
 import numpy as np
 from tqdm import tqdm
 from sklearn import preprocessing
-from LinearClassifier import LinearClassifier
+from LinearClassifier import LinearClassifier, INLPTraining
 #logging.basicConfig(level-logging.INFO) #turn on detailed logging
 
 
@@ -80,25 +80,29 @@ dev_tokens,dev_seq,dev_mask = bert_tokenization(dev_input,tokenizer)
 train_output = torch.load('../data/pmb_gold/gold_train_embeddings.pt')
 dev_output = torch.load('../data/pmb_gold/gold_dev_embeddings.pt')
 
-train_embeddings,train_y = from_sents_to_words(train_df,'sem',train_tokens,train_output)
-dev_embeddings,dev_y = from_sents_to_words(dev_df,'sem',dev_tokens,dev_output)
+train_embeddings,train_y = from_sents_to_words(train_df,'syn',train_tokens,train_output)
+dev_embeddings,dev_y = from_sents_to_words(dev_df,'syn',dev_tokens,dev_output)
+
 
 # print(train_embeddings.shape)
 # print(train_y.shape)
 # print(dev_embeddings.shape)
 # print(dev_y.shape)
 
+print(dev_embeddings.dtype)
 num_epochs = 100
 num_tags = len(np.unique(train_y.numpy()))
 input_dim = train_embeddings.shape[1] #should be 768
 
-
-lin_class = LinearClassifier(train_embeddings,train_y,num_tags,dev_x=dev_embeddings,dev_y=dev_y)
-print(lin_class.dev_x.shape)
-print(num_tags)
-#print(lin_class.output.shape)
-bm=lin_class.optimize()
+inlp_syn = INLPTraining(train_embeddings,train_y,num_tags,dev_x=dev_embeddings,dev_y=dev_y)
+inlp_syn.run_INLP_loop(10)
 sys.exit()
+# lin_class = LinearClassifier(train_embeddings,train_y,num_tags,dev_x=dev_embeddings,dev_y=dev_y)
+# print(lin_class.dev_x.shape)
+# print(num_tags)
+# #print(lin_class.output.shape)
+# bm=lin_class.optimize()
+# sys.exit()
 
 orig_embeddings = train_embeddings
 Ws = []
@@ -107,7 +111,9 @@ INLP_iterations = 3 #arbitrary choice for now
 min_accuracy = 0.0 #can tune this as well
 
 #INLP loop
+## TODO: whether should include autoregressive
 for i in tqdm(range(INLP_iterations)):
+
 	#y are the gold standard labels for pos or srl
 	linear_model, accuracy = train_linear_classifier(embeddings, y, num_epochs, num_tags, input_dim) #train linear classifier
 	print('accuracy:'+str(accuracy))
