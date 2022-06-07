@@ -42,9 +42,10 @@ class LinearClassifier(torch.nn.Module):
 		stop_count = 0
 		for epoch in range(num_epochs):
 			preds = self.forward(self.embeddings)
-			print(preds.shape)
+			# print(preds.shape)
+			# print(self.output.shape)
 			loss = self.loss_func(preds,self.output)
-			print(self.output.shape)
+			
 			optimizer.zero_grad()
 			loss.backward(retain_graph=True)
 			optimizer.step()
