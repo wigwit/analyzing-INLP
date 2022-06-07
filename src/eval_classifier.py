@@ -32,12 +32,13 @@ class EvalClassifier(LinearClassifier):
     
     def eval(self):
         with torch.no_grad():
+            # TODO: batching if necessary
             dev_pred = self.forward(self.dev_x)
             loss = self.loss_func(dev_pred,self.dev_y)
         return dev_pred, loss.item()
     
     def optimize(self,batch_size=32, lr=0.01,num_epochs=100):
-        optimizer = torch.optim.LBFGS(self.linear.parameters(), lr = lr)
+        optimizer = torch.optim.Adagrad(self.linear.parameters(), lr = lr)
         best_predictions_tr = None
         best_predictions_dv = None
         best_loss=float('inf')
