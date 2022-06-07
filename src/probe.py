@@ -8,57 +8,37 @@ import pdb
 import json
 import pickle
 from typing import Dict, List
-from collections import defaultdict
 from utils import bert_tokenization, get_projection_to_intersection_of_nullspaces, get_rowspace_projection, train_linear_classifier
 import numpy as np
 from tqdm import tqdm
-from sklearn import preprocessing
+
+from load_bert import DataProcessing
 from LinearClassifier import LinearClassifier, INLPTraining
 from eval_classifier import EvalClassifier
 #logging.basicConfig(level-logging.INFO) #turn on detailed logging
 
+## defining GPU here
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device('cpu')
 
-def from_sents_to_words(input_df,task_keyword,tokens,output):
-	'''
-	this function checks the tokenization process and transfer data into word level
-	Arguments:
-		input_df: a pd.DataFrame object
-		task_keyword: {syn,sem}
-		tokens: bert tokenized object
-		output: a tensor with shape (sentence num, max_seq_len, embedding dim)
-	Returns: 
-		embeddings: a tensor with shape (word num, embedding dim)
-		y: a tensor with shape (word num,1)
-	'''
-	input_text = input_df['text'].tolist()
-	if task_keyword == 'syn':
-		input_y = input_df['ccg_tags'].tolist()
-	else:
-		input_y = input_df['semantics_tags'].tolist()
-	label_encoder = preprocessing.LabelEncoder()
-	label_encoder.fit(np.concatenate(input_y))
-	encoded_y = [label_encoder.transform(l) for l in input_y]
-	## mapping tokens back to word ids
-	word_inds = [tokens.word_ids(i) for i in range(len(input_y))]
-	d_list = []
-	embed_by_sent = []
-	skip_ind = []
-	for i in range(len(word_inds)):
-		d = defaultdict(list)
-		for ind,emb in zip(word_inds[i], output[i]):
-			if isinstance(ind, int):
-				d[ind].append(emb)
-	
-		word_in_sent = [torch.mean(torch.stack(d[k],0),0) if len(d[k])>1 else d[k][0] for k in d.keys()]
-		if len(word_in_sent)!= len(input_text[i]):
-			skip_ind.append(i)
-			continue
-		embed_by_sent.append(torch.stack(word_in_sent,0))
-		d_list.append(d)
-	embeddings = torch.cat(embed_by_sent)
-	y = torch.tensor([item for i, sublist in enumerate(encoded_y) if i not in skip_ind for item in sublist ], dtype=torch.long)
-	return embeddings,y
+silver_train = DataProcessing('../data/pmb_gold/gold_train.pkl')
+silver_train.bert_tokenize()
+out_sil = silver_train.get_bert_embeddings('load','../data/pmb_gold/gold_train_embeddings.pt')
+print(out_sil.shape)
 
+emb, y = silver_train.from_sents_to_words('syn',out_sil)
+print(emb.is_cuda)
+print(y.is_cuda)
+num_tags = len(np.unique(y.cpu().numpy()))
+
+print(num_tags)
+inlp_syn = INLPTraining(emb,y,num_tags)
+inlp_syn = inlp_syn.to(device)
+P,P_is,Ws=inlp_syn.run_INLP_loop(10)
+print(f'the rank of P is :{np.linalg.matrix_rank(P)}')
+for P_i in P_is:
+	print(np.linalg.matrix_rank(P_i))
+
+sys.exit()
 
 	
 
@@ -96,18 +76,18 @@ dev_embeddings,dev_y = from_sents_to_words(dev_df,'sem',dev_tokens,dev_output)
 
 #print(dev_embeddings.dtype)
 num_epochs = 100
-num_tags = len(np.unique(train_y.numpy()))
+
 input_dim = train_embeddings.shape[1] #should be 768
 
-# sem_test = LinearClassifier(train_embeddings,train_y,num_tags)
+sem_test = LinearClassifier(train_embeddings,train_y,num_tags)
+#print(sem_test.stat_dict())
+# sem_test = sem_test.to('cuda')
+# sem_test.optimize()
+# sys.exit()
 # sem_test.optimize()
 # eval_test = EvalClassifier(train_embeddings,train_y,num_tags,dev_embeddings,dev_y)
 # eval_test.optimize(batch_size=1000)
-inlp_syn = INLPTraining(train_embeddings,train_y,num_tags)
-P,P_is,Ws=inlp_syn.run_INLP_loop(10)
-print(f'the rank of P is :{np.linalg.matrix_rank(P)}')
-for P_i in P_is:
-	print(np.linalg.matrix_rank(P_i))
+
 sys.exit()
 # lin_class = LinearClassifier(train_embeddings,train_y,num_tags,dev_x=dev_embeddings,dev_y=dev_y)
 # print(lin_class.dev_x.shape)

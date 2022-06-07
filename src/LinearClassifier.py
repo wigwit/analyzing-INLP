@@ -6,6 +6,9 @@ import scipy
 from typing import List
 import tqdm
 
+## defining GPU here
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device('cpu')
+
 class LinearClassifier(torch.nn.Module):
 	def __init__(self, input_embeddings,output,tag_size):
 		'''
@@ -39,7 +42,9 @@ class LinearClassifier(torch.nn.Module):
 		stop_count = 0
 		for epoch in range(num_epochs):
 			preds = self.forward(self.embeddings)
+			print(preds.shape)
 			loss = self.loss_func(preds,self.output)
+			print(self.output.shape)
 			optimizer.zero_grad()
 			loss.backward(retain_graph=True)
 			optimizer.step()
@@ -55,11 +60,11 @@ class LinearClassifier(torch.nn.Module):
 					break
 				else:
 					stop_count+=1
-		final_pred = torch.argmax(best_predictions,dim=1).numpy()
+		final_pred = torch.argmax(best_predictions,dim=1).cpu().numpy()
 		#final_dev = torch.argmax(best_dev,dim=1).numpy()
 		#final_out = output.numpy()
 		#dev_out = self.dev_y.numpy()
-		train_acc = accuracy_score(self.output.numpy(),final_pred)
+		train_acc = accuracy_score(self.output.cpu().numpy(),final_pred)
 		#print(f'train accuracy score:{train_acc:.4f}')
 		#print(f'dev accuracy score:{accuracy_score(self.dev_y.numpy(),final_dev):.4f}')
 			
@@ -102,13 +107,13 @@ class INLPTraining(LinearClassifier):
 	def reinitialize_classifier(self):
 		in_size = self.linear.in_features
 		out_size = self.linear.out_features
-		self.linear = torch.nn.Linear(in_size,out_size)
+		self.linear = torch.nn.Linear(in_size,out_size,device=device)
 	
 	def apply_projection(self,P):
 		'''
 		applying projection of P to the embedding vectors
 		'''
-		P = torch.tensor(P,dtype=torch.float)
+		P = torch.tensor(P,dtype=torch.float,device=device)
 		self.embeddings =  torch.matmul(P,self.original_embedding).T
 
 	def run_INLP_loop(self,iteration,min_acc=0.0):
@@ -123,7 +128,7 @@ class INLPTraining(LinearClassifier):
 			if acc < min_acc:
 				# TODO: not sure it should be continue here
 				continue
-			W = bm.weight.detach().numpy()
+			W = bm.weight.detach().cpu().numpy()
 			Ws.append(W)
 			# Noted this is the projection space for W, not the null space
 			P_rowspace_wi = self.get_rowspace_projection(W)
