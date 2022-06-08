@@ -24,8 +24,15 @@ class DataProcessing:
     '''
     A class for processing data and get right format of input output for model
     '''
-    def __init__(self, input_pk_path):
-        self.input_df = pd.read_pickle(input_pk_path)
+    def __init__(self, standard,dset):
+        '''
+        standard = {gold,silver}
+        dset = {train,test,dev}
+        '''
+        self.standard = standard
+        self.dset = dset
+        path = '../data/pmb_'+standard+'/'+standard+'_'+dset+'.pkl'
+        self.input_df = pd.read_pickle(path)
     
     def bert_tokenize(self,max_len=32):
         '''
@@ -44,7 +51,9 @@ class DataProcessing:
         return self.tokens
     
     
-    def get_bert_embeddings(self,load_option='no_save',load_path=None):
+    def get_bert_embeddings(self,load_option='save'):
+
+        load_path = '../data/pmb_'+self.standard+'/'+self.standard+'_'+self.dset+'_emb.pt'
 
         if load_option == 'load':
             output_tensor = torch.load(load_path)
@@ -93,9 +102,10 @@ class DataProcessing:
             input_y = self.input_df['ccg_tags'].tolist()
         else:
             input_y = self.input_df['semantics_tags'].tolist()
-        label_encoder = preprocessing.LabelEncoder()
-        label_encoder.fit(np.concatenate(input_y))
-        encoded_y = [label_encoder.transform(l) for l in input_y]
+        
+        with open('../data/pmb_'+self.standard+'/'+task_keyword+'_mapping.json') as f:
+                label_encoder = json.load(f)
+
         ## mapping tokens back to word ids
         word_inds = [self.tokens.word_ids(i) for i in range(len(input_y))]
         d_list = []
@@ -114,11 +124,10 @@ class DataProcessing:
             embed_by_sent.append(torch.stack(word_in_sent,0))
             d_list.append(d)
         embeddings = torch.cat(embed_by_sent)
-        y = torch.tensor([item for i, sublist in enumerate(encoded_y) if i not in skip_ind for item in sublist ], dtype=torch.long)
-        
+        y = torch.tensor([label_encoder[item] for i, sublist in enumerate(input_y) if i not in skip_ind for item in sublist ], dtype=torch.long)
         #embeddings = embeddings.to(device)
         y = y.to(device)
-        return embeddings,y
+        return embeddings,y,len(label_encoder)
 
 
 
@@ -177,7 +186,9 @@ def encoding_srl(srls:List[Dict], srl_ref=None):
     return srl_ref, res
 
 # loading data from saved pickle files
-# train_df = pd.read_pickle('../data/pmb_gold/gold_dev.pkl')
+train_df = pd.read_pickle('../data/pmb_silver/silver_train.pkl')
+labels = np.concatenate(train_df['ccg_tags'].tolist())
+print(len(np.unique(labels)))
 # train_input = train_df['text'].tolist()
 
 # seq_lens = [len(item) for item in train_input]

@@ -22,7 +22,7 @@ class LinearClassifier(torch.nn.Module):
 		super().__init__()
 		self.embeddings = input_embeddings
 		self.output = output
-		self.linear = torch.nn.Linear(input_embeddings.shape[1], tag_size)
+		self.linear = torch.nn.Linear(input_embeddings.shape[1], tag_size,device=device)
 		# class weight performs really worse
 		# cls_weight = compute_class_weight('balanced',classes=np.array(range(tag_size)),y=output.numpy())
 		# cls_weight = torch.tensor(cls_weight,dtype=torch.float)

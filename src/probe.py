@@ -20,17 +20,29 @@ from eval_classifier import EvalClassifier
 ## defining GPU here
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device('cpu')
 
-silver_train = DataProcessing('../data/pmb_gold/gold_train.pkl')
-silver_train.bert_tokenize()
-out_sil = silver_train.get_bert_embeddings('load','../data/pmb_gold/gold_train_embeddings.pt')
-print(out_sil.shape)
+gold_train = DataProcessing('gold','train')
+gold_train.bert_tokenize()
+train_emb = gold_train.get_bert_embeddings('load')
 
-emb, y = silver_train.from_sents_to_words('syn',out_sil)
-print(emb.is_cuda)
-print(y.is_cuda)
-num_tags = len(np.unique(y.cpu().numpy()))
+emb_tr, y_tr, num_tags = gold_train.from_sents_to_words('sem',train_emb)
 
+gold_dev = DataProcessing('gold','dev')
+gold_dev.bert_tokenize()
+dev_emb = gold_dev.get_bert_embeddings('load')
+
+emb_dev, y_dev, num_tags = gold_dev.from_sents_to_words('sem',dev_emb)
+
+# print(emb.is_cuda)
+# print(y.is_cuda)
 print(num_tags)
+## TODO: weird inconsistency
+eval_gold = EvalClassifier(emb_tr,y_tr,num_tags,emb_dev,y_dev)
+eval_gold.optimize()
+
+sys.exit()
+
+
+## calling INLP
 inlp_syn = INLPTraining(emb,y,num_tags)
 inlp_syn = inlp_syn.to(device)
 P,P_is,Ws=inlp_syn.run_INLP_loop(10)
@@ -39,6 +51,10 @@ for P_i in P_is:
 	print(np.linalg.matrix_rank(P_i))
 
 sys.exit()
+
+## calling eval
+#eval_t = EvalClassifier(emb,y,num_tags,dev_x=,dev_y=)
+#eval_t.optimize()
 
 	
 

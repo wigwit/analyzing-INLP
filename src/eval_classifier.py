@@ -37,7 +37,7 @@ class EvalClassifier(LinearClassifier):
             loss = self.loss_func(dev_pred,self.dev_y)
         return dev_pred, loss.item()
     
-    def optimize(self,batch_size=32, lr=0.01,num_epochs=100):
+    def optimize(self,batch_size=32, lr=0.01,num_epochs=12):
         optimizer = torch.optim.Adagrad(self.linear.parameters(), lr = lr)
         best_predictions_tr = None
         best_predictions_dv = None
@@ -66,6 +66,7 @@ class EvalClassifier(LinearClassifier):
             if dev_loss<best_loss:
                 # train_preds = torch.cat(train_preds)
                 # dev_preds = torch.cat(dev_preds)
+                best_loss = dev_loss
                 best_predictions_tr = torch.cat(train_preds)
                 best_predictions_dv = dev_preds
                 best_model=self.linear
@@ -76,9 +77,9 @@ class EvalClassifier(LinearClassifier):
                 else:
                     stop_count+=1
             
-        final_train = torch.argmax(best_predictions_tr,dim=1).numpy()
-        final_dev = torch.argmax(best_predictions_dv,dim=1).numpy()
-        print(f'train accuracy score:{accuracy_score(self.output.numpy(),final_train):.4f}')
-        print(f'dev accuracy score:{accuracy_score(self.dev_y.numpy(),final_dev):.4f}')
+        final_train = torch.argmax(best_predictions_tr,dim=1).cpu().numpy()
+        final_dev = torch.argmax(best_predictions_dv,dim=1).cpu().numpy()
+        print(f'train accuracy score:{accuracy_score(self.output.cpu().numpy(),final_train):.4f}')
+        print(f'dev accuracy score:{accuracy_score(self.dev_y.cpu().numpy(),final_dev):.4f}')
 
         
