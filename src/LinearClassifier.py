@@ -20,6 +20,7 @@ class LinearClassifier(torch.nn.Module):
 		dev_y: dev label for stopping criterion
 		'''
 		super().__init__()
+		## everything defined in GPU
 		self.embeddings = input_embeddings
 		self.output = output
 		self.linear = torch.nn.Linear(input_embeddings.shape[1], tag_size,device=device)
@@ -31,7 +32,8 @@ class LinearClassifier(torch.nn.Module):
 	def forward(self,embeddings):
 		# embedding size = [batch_size, embed_dim]
 		# output size = [batch_size,tag_size]
-		fc = self.linear(embeddings)
+		emb = embeddings.to(device)
+		fc = self.linear(emb)
 		return fc
 
 	
@@ -40,11 +42,12 @@ class LinearClassifier(torch.nn.Module):
 		best_predictions = None
 		best_loss = float('inf')
 		stop_count = 0
+		output = self.output.to(device)
 		for epoch in range(num_epochs):
 			preds = self.forward(self.embeddings)
 			# print(preds.shape)
 			# print(self.output.shape)
-			loss = self.loss_func(preds,self.output)
+			loss = self.loss_func(preds,output)
 			
 			optimizer.zero_grad()
 			loss.backward(retain_graph=True)
@@ -65,7 +68,7 @@ class LinearClassifier(torch.nn.Module):
 		#final_dev = torch.argmax(best_dev,dim=1).numpy()
 		#final_out = output.numpy()
 		#dev_out = self.dev_y.numpy()
-		train_acc = accuracy_score(self.output.cpu().numpy(),final_pred)
+		train_acc = accuracy_score(self.output.numpy(),final_pred)
 		#print(f'train accuracy score:{train_acc:.4f}')
 		#print(f'dev accuracy score:{accuracy_score(self.dev_y.numpy(),final_dev):.4f}')
 			
@@ -106,6 +109,7 @@ class INLPTraining(LinearClassifier):
 		return P
 
 	def reinitialize_classifier(self):
+		## may be empty cache here
 		in_size = self.linear.in_features
 		out_size = self.linear.out_features
 		self.linear = torch.nn.Linear(in_size,out_size,device=device)
@@ -114,7 +118,8 @@ class INLPTraining(LinearClassifier):
 		'''
 		applying projection of P to the embedding vectors
 		'''
-		P = torch.tensor(P,dtype=torch.float,device=device)
+		## may be empty cache here
+		P = torch.tensor(P,dtype=torch.float)
 		self.embeddings =  torch.matmul(P,self.original_embedding).T
 
 	def run_INLP_loop(self,iteration,min_acc=0.0):
@@ -128,7 +133,7 @@ class INLPTraining(LinearClassifier):
 			print(f'train acc for round {i} is {acc:.4f}')
 			if acc < min_acc:
 				# TODO: not sure it should be continue here
-				continue
+				break
 			W = bm.weight.detach().cpu().numpy()
 			Ws.append(W)
 			# Noted this is the projection space for W, not the null space

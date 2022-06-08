@@ -3,6 +3,9 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler
 from sklearn.metrics import accuracy_score
 
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device('cpu')
+
+
 class EvalClassifier(LinearClassifier):
     def __init__(self,input_embeddings,output,tag_size,dev_x,dev_y):
         '''
@@ -10,8 +13,8 @@ class EvalClassifier(LinearClassifier):
         But With batching and different logistics regression
         '''
         super().__init__(input_embeddings,output,tag_size)
-        self.dev_x = dev_x
-        self.dev_y = dev_y
+        self.dev_x = dev_x.to(device)
+        self.dev_y = dev_y.to(device)
         # TODO: tranfer output to one hot vector
         #self.output_vecs = 
         #self.loss_func = torch.nn.NLLLoss()
@@ -37,7 +40,7 @@ class EvalClassifier(LinearClassifier):
             loss = self.loss_func(dev_pred,self.dev_y)
         return dev_pred, loss.item()
     
-    def optimize(self,batch_size=32, lr=0.01,num_epochs=12):
+    def optimize(self,batch_size=32, lr=0.001,num_epochs=12):
         optimizer = torch.optim.Adagrad(self.linear.parameters(), lr = lr)
         best_predictions_tr = None
         best_predictions_dv = None
@@ -49,13 +52,15 @@ class EvalClassifier(LinearClassifier):
             train_preds = []
             dev_preds = []
             for emb, label in train_batch:
+                emb = emb.to(device)
+                label = label.to(device)
                 pred = self.forward(emb)
                 train_preds.append(pred)
                 loss = self.loss_func(pred,label)
                 self.linear.zero_grad()
                 loss.backward(retain_graph=True)
                 # clip the gradient
-                torch.nn.utils.clip_grad_norm_(self.linear.parameters(), 1.0)
+                #torch.nn.utils.clip_grad_norm_(self.linear.parameters(), 1.0)
                 optimizer.step()
                 train_loss+=loss.item()
             avg_loss = train_loss/len(train_batch)

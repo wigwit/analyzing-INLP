@@ -34,18 +34,17 @@ dev_emb = gold_dev.get_bert_embeddings('load')
 ## all in cpu right now
 emb_dev, y_dev, num_tags = gold_dev.from_sents_to_words('sem',dev_emb)
 
-
+if torch.cuda.is_available():
+	torch.cuda.empty_cache()
 print(num_tags)
 
-eval_gold = EvalClassifier(emb_tr,y_tr,num_tags,emb_dev,y_dev)
-eval_gold.optimize()
-
+t = EvalClassifier(emb_tr,y_tr,num_tags,emb_dev,y_dev)
+t.optimize()
 sys.exit()
 
-
 ## calling INLP
-inlp_syn = INLPTraining(emb,y,num_tags)
-inlp_syn = inlp_syn.to(device)
+inlp_syn = INLPTraining(emb_tr,y_tr,num_tags)
+# inlp_syn = inlp_syn.to(device)
 P,P_is,Ws=inlp_syn.run_INLP_loop(10)
 print(f'the rank of P is :{np.linalg.matrix_rank(P)}')
 for P_i in P_is:
