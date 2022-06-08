@@ -20,22 +20,23 @@ from eval_classifier import EvalClassifier
 ## defining GPU here
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device('cpu')
 
-gold_train = DataProcessing('gold','train')
+gold_train = DataProcessing('silver','train')
 gold_train.bert_tokenize()
 train_emb = gold_train.get_bert_embeddings('load')
 
+## all in cpu right now
 emb_tr, y_tr, num_tags = gold_train.from_sents_to_words('sem',train_emb)
 
-gold_dev = DataProcessing('gold','dev')
+gold_dev = DataProcessing('silver','dev')
 gold_dev.bert_tokenize()
 dev_emb = gold_dev.get_bert_embeddings('load')
 
+## all in cpu right now
 emb_dev, y_dev, num_tags = gold_dev.from_sents_to_words('sem',dev_emb)
 
-# print(emb.is_cuda)
-# print(y.is_cuda)
+
 print(num_tags)
-## TODO: weird inconsistency
+
 eval_gold = EvalClassifier(emb_tr,y_tr,num_tags,emb_dev,y_dev)
 eval_gold.optimize()
 
