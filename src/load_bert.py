@@ -46,7 +46,6 @@ class DataProcessing:
                     is_split_into_words=True,
                     padding=True,
                     return_tensors='pt')
-        tokens = tokens.to(device)
         self.tokens = tokens
         return self.tokens
     
@@ -57,7 +56,7 @@ class DataProcessing:
 
         if load_option == 'load':
             output_tensor = torch.load(load_path)
-            output_tensor = output_tensor.to(device)
+            #output_tensor = output_tensor.to(device)
         
         else:
             input_seqs = self.tokens['input_ids']
@@ -81,9 +80,9 @@ class DataProcessing:
                     output = model(word_ids,attention_mask=mask)
                     outputs.append(output[0])
             
-            output_tensor = torch.cat(outputs).detach()
+            output_tensor = torch.cat(outputs).detach().cpu()
             if load_option == 'save':
-                torch.save(output_tensor.cpu(),load_path)
+                torch.save(output_tensor,load_path)
         
         return output_tensor
 
@@ -126,7 +125,7 @@ class DataProcessing:
         embeddings = torch.cat(embed_by_sent)
         y = torch.tensor([label_encoder[item] for i, sublist in enumerate(input_y) if i not in skip_ind for item in sublist ], dtype=torch.long)
         #embeddings = embeddings.to(device)
-        y = y.to(device)
+        #y = y.to(device)
         return embeddings,y,len(label_encoder)
 
 
