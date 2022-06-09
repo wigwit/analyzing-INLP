@@ -171,18 +171,38 @@ We will assess each of these embedding types, the original BERT embeddings and t
 \section{Results}
 \label{sec:result}
 
+We first probe our tasks on the original embeddings, and linear classifers can successfully predict both CCG tags and semantics tags as resulted in table \ref{role description}. Then we apply INLP method to the linear classifers to derive guarding matrices $P_{syn}$ and $P_{sem}$ which will project the embeddings to the nullspace of syntactic space and semantic space respectively. With some linear tranformation with the original embeddings and the guarding matrices, we are able to extract the embeddings described in table \ref{description}. 
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{p{4cm}p{3cm}}
+        expression & description\\ \hline 
+        $v_{orig}$ & Original BERT embeddings  \\
+        $v_{nosem} = P_{sem} v_{orig}$ & Gained after INLP with semantics task \\
+        $v_{nosyn}= P_{syn} v_{orig}$ & Gained after INLP with syntactic task \\
+        $v_{sem} = v_{orig}-v_{no_sem}$ & Semantics representation \\
+        $v_{syn} = v_{orig}-v_{no_syn}$ & Syntactic representation \\
+        $v_{syn-sem} = P_{sem} v_{syn}$ &Contains syntactic features only \\
+        $v_{sem-syn} = P_{syn} v_{sem}$ &Contains semantic features only \\
+        $v_{syn*sem} = \langle v_{syn}, v_{sem} \rangle \cdot \frac{v_{syn}}{\|v_{sem}\|}$ & Syntactic representations projected on semantic space\\
+        $v_{sem*syn} = \langle v_{syn}, v_{sem} \rangle \cdot \frac{v_{syn}}{\|v_{syn}\|}$ & Semantics representations projected on semantic space\\
 
-%Summarize Main findings
+        
+        
+        \hline
+    \end{tabular}
+    \caption{\label{description} Description of Embeddings
+    }
+\end{table}
 
-This is where our results will go. 
+To further compare the impact of INLP, we 
 
 \begin{table*}[h]
     \centering
     \begin{tabular}{llll}
     \hline
-    \textbf{Embedding} & \textbf{Directions Removed} & \textbf{CCG Tagging} &\textbf{Semantic Labeling} \\
+    \textbf{Embedding} & \textbf{Directions Removed} & \textbf{CCG Tagging} &\textbf{Semantic Tagging} \\
     \hline
-    Original & 0 & $84.75\%$ & $88.56\%$ \\
+    $v_{orig}$ & 0 & $84.75\%$ & $88.56\%$ \\
     \hline
 
     Rand($|v_{nosem}|$) & 77 & $84.06\%$ & $87.71\%$ \\
@@ -201,7 +221,7 @@ This is where our results will go.
     \hline
     \hline
     \end{tabular}
-    \caption{\label{role description} Description of how to read results
+    \caption{\label{role description} Experiment Result of different Embeddings
     }
     \end{table*}
 
@@ -213,6 +233,8 @@ This is where our results will go.
 
 \section{Discussion}
 \label{sec:discussion}
+
+The INLP methods 
 
 %What do we learn
 %What are some limitations? (only looking at linear info)(only looking at info relevant for these tasks)
