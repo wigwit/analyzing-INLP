@@ -74,7 +74,7 @@ A novel method for removing information from an embedding, INLP iteratively trai
 %Should a model be able to solve a semantic task without syntactic information?
 %Vice versa? (Just be very explicit here)
 
-To evaluate the separability of syntax and semantics, we use two task: one task for the probing system and INLP procedure, and one task for evaluating performance on embeddings before and after INLP. We choose Combinatory Categorical Grammar (CCG from here on) tagging \citep{ccg-bank} as the syntactic task and semantic category labeling \citep{propbank} as the semantic task. 
+To evaluate the separability of syntax and semantics, we use two tasks: one task for the probing system and INLP procedure, and one task for evaluating performance on embeddings before and after INLP. We choose Combinatory Categorical Grammar (CCG from here on) tagging \citep{ccg-bank} as the syntactic task and semantic category labeling \citep{propbank} as the semantic task. 
 
 The remainder of the paper proceeds as follows: Section \ref{sec:related} explores previous work related to our experiment. Section \ref{sec:method} provides a description of the probing and evaluation tasks and gives an overview of the experiment pipeline. Section \ref{sec:result} reviews our experiments and affiliated results. Section \ref{sec:discussion} discusses the implications of those results. Finally, section \ref{sec:conclusion} gives an overview of the entire process and outlines possible next steps. 
 
@@ -149,7 +149,7 @@ The syntactic probing task involves training a linear classifier on the final la
 \subsection{Semantic probing task}
 \label{sec:semantics}
 
-Similar to the above, the semantic probing tasks involves training a linear classifier on the final layer BERT embeddings in order to predict the semantic tag (described in the data section) associated with each word. This classifier is used in the INLP algorithm in order to create a guarding function, $P_{sem}$, for the information necessary to complete the Semantic tag labeling task. As described in the Syntactic probing task section, we shall use the resulting guarding function to decompose the original embedding into a ``non-semantic component'', $v_{no sem} = P_{sem} x$, and a ``semantic component'', $v_{sem} = x - v_{no sem}$. 
+Similar to the above, the semantic probing task involves training a linear classifier on the final layer BERT embeddings in order to predict the semantic tag (described in the data section) associated with each word. This classifier is used in the INLP algorithm in order to create a guarding function, $P_{sem}$, for the information necessary to complete the Semantic tag labeling task. As described in the Syntactic probing task section, we shall use the resulting guarding function to decompose the original embedding into a ``non-semantic component'', $v_{no sem} = P_{sem} x$, and a ``semantic component'', $v_{sem} = x - v_{no sem}$. 
 
 
 \subsection{Evaluation tasks}
