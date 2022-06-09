@@ -131,3 +131,21 @@ def embeddingComponentBreakdown(x,P_sem,P_syn):
     #sem_syn_emb = sem_emb.dot(syn_emb) * syn_emb/torch.sqrt(torch.sum(syn_emb**2,dim=1))
 
     return no_sem_emb.T, no_syn_emb.T, syn_less_sem_emb.T, sem_less_syn_emb.T, syn_sem_emb.T, sem_syn_emb.T
+
+def dirKeptCount(P_sem,P_syn):
+    no_sem_ct = torch.matrix_rank(P_sem).item()
+    no_syn_ct = torch.matrix_rank(P_sem).item()
+    sem_ct = 768 - no_sem_ct
+    syn_ct = 768 - no_syn_ct
+    mat1 = P_sem - P_sem.matmul(P_syn)
+    syn_less_sem_ct = 768 - torch.matrix_rank(mat1).item()
+    mat2 = P_syn - P_syn.matmul(P_sem)
+    sem_less_syn_ct = 768 - torch.matrix_rank(mat2).item()
+    mat3a = torch.eye(768)-P_sem
+    mat3b = torch.eye(768)-P_syn
+    mat3 = mat3a.matmul(mat3b)
+    syn_sem_ct = torch.matrix_rank(mat3).item()
+    mat4 = mat3b.matmul(mat3a)
+    sem_syn_ct = torch.matrix_rank(mat4).item()
+
+    return syn_ct, sem_ct, syn_less_sem_ct, sem_less_syn_ct, syn_sem_ct, sem_syn_ct
