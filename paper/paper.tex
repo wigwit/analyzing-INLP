@@ -171,7 +171,7 @@ We will assess each of these embedding types, the original BERT embeddings and t
 \section{Results}
 \label{sec:result}
 
-We first probe our tasks on the original embeddings, and linear classifers can successfully predict both CCG tags and semantics tags (around 85\% accuracy) as resulted in table \ref{role description}. Then we apply INLP method to the linear classifers to derive guarding matrices $P_{syn}$ and $P_{sem}$ which will project the embeddings to the nullspace of syntactic space and semantic space respectively. With some linear tranformation with the original embeddings and the guarding matrices, we are able to extract the embeddings described in table \ref{description}. 
+We first probe our tasks on the original embeddings, and linear classifers can successfully predict both CCG tags and semantics tags (around 85\% testing accuracy) as resulted in table \ref{role description}. Then we apply INLP method to the linear classifers to derive guarding matrices $P_{syn}$ and $P_{sem}$ which will project the embeddings to the nullspace of syntactic space and semantic space respectively. With some linear tranformation with the original embeddings and the guarding matrices, we are able to extract the embeddings described in table \ref{description}. 
 \begin{table}[ht]
     \centering
     \begin{tabular}{p{4cm}p{3cm}}
@@ -194,13 +194,13 @@ We first probe our tasks on the original embeddings, and linear classifers can s
     }
 \end{table}
 
-To further compare the impact of INLP, we conduct experiments with random directions removed. For each embeddings, we record the number of removed directions using $Null(P)$ where $P$ is the projection matrix. For embeddings not derived from matrix multiplication, we obtain the number from $Null(M)$ where $M$ is the embedding matrix with size (768,instance number).\footnote{This is not necessarily equivalent to the number of direction removed. $Null(M) \geq Null(P)$ for the corresponding projection $P$ , but in practice the numbers are very close} Then we create embeddings with the same number of directions randomly removed and probe the tasks. 
+To further compare the impact of INLP, we conduct experiments with random directions removed. For each embeddings, we record the number of removed directions using $Null(P)$ where $P$ is the projection matrix. For embeddings not derived from matrix multiplication, we obtain the number from $Null(M)$ where $M$ is the embedding matrix with size (768,instance number).\footnote{This is not necessarily equivalent to the number of direction removed. $Null(M) \geq Null(P)$ for the corresponding projection $P$ , but in practice the numbers are very close} Then we create embeddings with the same number of directions randomly removed and probe the tasks. All the testing accuracy of our final experiments are in table \ref{role description}.
 
 \begin{table*}[h]
     \centering
     \begin{tabular}{llll}
     \hline
-    \textbf{Embedding} & \textbf{Directions Removed} & \textbf{CCG Tagging} &\textbf{Semantic Tagging} \\
+    \textbf{Embedding} & \textbf{Directions Removed} & \textbf{CCG Tagging} &\textbf{Semantics Tagging} \\
     \hline
     $v_{orig}$ & 0 & $84.75\%$ & $88.56\%$ \\
     \hline
@@ -221,7 +221,7 @@ To further compare the impact of INLP, we conduct experiments with random direct
     \hline
     \hline
     \end{tabular}
-    \caption{\label{role description} Experiment Result of different Embeddings
+    \caption{\label{role description} Experiment Result of Different Embeddings
     }
     \end{table*}
 
@@ -234,13 +234,30 @@ To further compare the impact of INLP, we conduct experiments with random direct
 \section{Discussion}
 \label{sec:discussion}
 
-The INLP methods 
+The INLP method successfully guard information retrieved from probe task. When performing CCG tagging, the model accuracy drops significantly (from 84.06 \% to 23.76\%), and similarly for semantics tagging. To measure the relevancy of semantics information to syntactic task, we compared the performance of CCG tagging with embeddings $v_{nosem}$ with that of embeddings $v_{nosyn}$. The both performances have considerable decrease as to the original embeddings. The model is using representation from both space when probe the syntactic task. Meanwhile, the performances of semantics tagging with the two embeddings differ significantly, with $v_{nosyn}$ performs almost three times better than $v_{nosem}$. The result suggests that the semantics task is less dependent on the syntactic information than the opposite direction, which contradicts the assumption that semantics space will be rel
+
+To investigate the compositionality of semantics space and syntactic space, we also calculated the average cosine simliarity scores between embeddings in table \ref{sim}.
 
 %What do we learn
 %What are some limitations? (only looking at linear info)(only looking at info relevant for these tasks)
 
-This is where our discussion of results will go.
 
+\begin{table}[h]
+    \centering
+    \begin{tabular}{p{4cm}p{3cm}}
+        expression & similarity score\\ \hline 
+        $v_{orig}, v_{nosem}$ &  $0.4183$ \\ 
+        $v_{orig}, v_{nosyn}$ & $0.3609$\\ 
+        $v_{nosyn}, v_{nosem}$ & $0.2830$ \\
+        $v_{syn-sem}, v_{sem-syn}$ & $0.2579$ \\ 
+
+        
+        
+        \hline
+    \end{tabular}
+    \caption{\label{sim} Similarity of Semantics and Syntactic Representations
+    }
+\end{table}
 
 
 \section{Conclusion}
