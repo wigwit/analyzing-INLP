@@ -158,7 +158,8 @@ Similar to the above, the semantic probing task involves training a linear class
 
 Our goal is to determine which information sets captured in the BERT embeddings are relevant for our evaluation tasks. We thus use the components derived from the probing tasks to create new embeddings that isolate specific types of information. These embeddings are then evaluated on the syntactic and semantic tasks that were used for probing, and their performance is compared to that of the original embeddings. We also compare the performance of each model trained on one of these embeddings with another trained on new embeddings that are created by randomly removing the same number of dimensions from the original embeddings as are removed by the INLP guarding function. In doing so we can test the extent to which the loss of the particular information set of interest is responsible for the drop in performance, as opposed to a general loss of information. 
 
-The new embeddings to be tested include the syntactic component, the non-syntactic component, the semantic component and the non-semantic component derived from the probing tasks. Additionally, we can create an embedding that contains syntactic information and removes semantic information by linearly projecting the syntactic component onto the non-semantic component, $v_{syn - sem} = P_{sem} v_{syn}$. Using a similar process, we can create an embedding that contains semantic information and removes the syntactic information present, $v_{sem - syn} = P_{syn} v_{sem}$. Finally, we can create an embedding that contains the semantic information captured by the syntactic component, by linearly projecting the syntactic component onto the semantic component, $v_{syn * sem} = \langle v_{syn} ,v_{sem} \rangle u_{sem}$ where $u_{sem}$ is the unit vector for $v_{sem}$. And similarly, we can create an embedding that contains the syntactic information captured by the semantic component, $v_{sem * syn} = \langle v_{sem} , v_{syn} \rangle  u_{syn}$
+The new embeddings to be tested include the syntactic component, the non-syntactic component, the semantic component and the non-semantic component derived from the probing tasks. Additionally, we can create an embedding that contains syntactic information and removes semantic information by linearly projecting the syntactic component onto the non-semantic component, $v_{syn - sem} = P_{sem} v_{syn}$. Using a similar process, we can create an embedding that contains semantic information and removes the syntactic information present, $v_{sem - syn} = P_{syn} v_{sem}$. 
+% Finally, we can create an embedding that contains the semantic information captured by the syntactic component, by linearly projecting the syntactic component onto the semantic component, $v_{syn * sem} = \langle v_{syn} ,v_{sem} \rangle u_{sem}$ where $u_{sem}$ is the unit vector for $v_{sem}$. And similarly, we can create an embedding that contains the syntactic information captured by the semantic component, $v_{sem * syn} = \langle v_{sem} , v_{syn} \rangle  u_{syn}$
 
 We will assess each of these embedding types, the original BERT embeddings and the embeddings created by randomly removing directional information on the CCG and Semantic labeling tasks that were used in the probes. 
 
@@ -183,8 +184,8 @@ We first probe our tasks on the original embeddings, and linear classifers can s
         $v_{syn} = v_{orig}-v_{nosyn}$ & Syntactic representation \\
         $v_{syn-sem} = P_{sem} v_{syn}$ &Contains syntactic features only \\
         $v_{sem-syn} = P_{syn} v_{sem}$ &Contains semantic features only \\
-        $v_{syn*sem} = \langle v_{syn}, v_{sem} \rangle \cdot \frac{v_{syn}}{\|v_{sem}\|}$ & Syntactic representations projected on semantic space\\
-        $v_{sem*syn} = \langle v_{syn}, v_{sem} \rangle \cdot \frac{v_{syn}}{\|v_{syn}\|}$ & Semantics representations projected on semantic space\\
+        % $v_{syn*sem} = \langle v_{syn}, v_{sem} \rangle \cdot \frac{v_{syn}}{\|v_{sem}\|}$ & Syntactic representations projected on semantic space\\
+        % $v_{sem*syn} = \langle v_{syn}, v_{sem} \rangle \cdot \frac{v_{syn}}{\|v_{syn}\|}$ & Semantics representations projected on semantic space\\
 
         
         
@@ -209,15 +210,15 @@ To further compare the impact of INLP, we conduct experiments with random direct
     Rand($|v_{nosyn}|$) & 159 & $82.26\%$ & $87.57\%$ \\
     Rand($|v_{syn-sem}|$) & 81 & $83.11\%$ & $87.61\%$ \\
     Rand($|v_{sem-syn}|$) & 161 & $82.46\%$ & $86.04\%$ \\
-    Rand($|v_{syn*sem}|$) & 0 & p$\%$ & p$\%$ \\
-    Rand($|v_{sem*syn}|$) & 0 & p$\%$ & p$\%$ \\
+    % Rand($|v_{syn*sem}|$) & 0 & p$\%$ & p$\%$ \\
+    % Rand($|v_{sem*syn}|$) & 0 & p$\%$ & p$\%$ \\
     \hline
     $v_{nosem}$ & 77 & $27.93\%$ & $17.28\%$ \\
     $v_{nosyn}$ & 159 & $23.76\%$ & $49.43\%$ \\
     $v_{syn-sem}$ & 81 & $34.24\%$ & $33.91\%$ \\
     $v_{sem-syn}$ & 161 & $26.96\%$ & $50.21\%$ \\
-    $v_{syn*sem}$ & 0 & p$\%$ & p$\%$ \\
-    $v_{sem*syn}$ & 0 & p$\%$ & p$\%$ \\
+    % $v_{syn*sem}$ & 0 & p$\%$ & p$\%$ \\
+    % $v_{sem*syn}$ & 0 & p$\%$ & p$\%$ \\
     \hline
     \hline
     \end{tabular}
@@ -265,7 +266,7 @@ It has been established that linear classifer is successful in various linguisti
 
 We employed INLP methods and successfully damaged the capablity of linear classifer to probe the designated tasks. After gained guard matrices that remove task specific informations from the embeddings, we examined the separablity of semantics and syntactic representation by evaluation tasks on various embeddings. Our analysis concluded:first, removing either syntactic or semantic representation will hurt probing tasks; second, syntactic task will be more dependent on semantic information than the opposite direction; last, BERT embeddings is more similar to syntactic representation than semantic representation. 
 
-Though INLP successfully produces the desired result, it is worth also worth noting that our dataset is relatively small compared to the number of parameters in linear classifier. In the future, we will expect this epxeriment to be reproduced at a larger scale so that the INLP method can be further validated. 
+Though INLP successfully produces the desired result, it is worth noting that our dataset is relatively small compared to the number of parameters in linear classifier. In the future, we will expect this epxeriment to be reproduced at a larger scale so that the experiment findings can be further validated. 
 
 
 
