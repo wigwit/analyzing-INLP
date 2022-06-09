@@ -133,11 +133,11 @@ We will pair the INLP method with the probing tasks described in sections \ref{s
 \subsection{Data}
 \label{sec:data}
 
-%Description of the data set used and the information it contains relevant to the tasks of interest. Talk about pre-processing the syntax trees to get CCG tags. 
-%We will use the English V4 subset of the CoNLL 2012 shared task data \citep{2012-conll} . We must perform two pre-processing steps for this data to be used for our probing and evaluation tasks. The first is to apply \citet{ccg-bank}'s CCG Derivation algorithm to the parse tree field in the dataset, in order to create the CCG tags for each word. If this proves to be too time-consuming or computationally expensive then we shall change the syntactic probing task to utilize the POS tags available in the dataset, in place of CCG tags. The second task is to use the SRL frames in the dataset to generate (verb, BIO-argument-tag) pairs that will act as the categories for the semantic probing task. 
-
 %Need to update this section to reflect the new dataset
-We use the NAME data set to test the linear separability of the semantic and syntactic information in word-level BERT embeddings. %NEED TO FILL THIS OUT STILL
+We use the English gold standard of Parallel Meaning Bank v4.0 \citep{pmbData} to test the linear separability of the semantic and syntactic information in word-level BERT embeddings. This data set contains word-level semantic tags and NAME FEATURE USED FOR CCG DERIVATIONS %Fill this in
+ that we parse using CITE CCG PARSER %Fill this in
+ to develop word-level CCG tags, both of which are used to train the linear classifiers used for probing and evaluation. The gold-standard data set is comprised of XX words. %Fill this in
+ %Do we drop anything or do any other pre-processing that I missed here? 
 
 
 \subsection{Syntactic probing task}
