@@ -158,7 +158,7 @@ Similar to the above, the semantic probing task involves training a linear class
 
 Our goal is to determine which information sets captured in the BERT embeddings are relevant for our evaluation tasks. We thus use the components derived from the probing tasks to create new embeddings that isolate specific types of information. These embeddings are then evaluated on the syntactic and semantic tasks that were used for probing, and their performance is compared to that of the original embeddings. We also compare the performance of each model trained on one of these embeddings with another trained on new embeddings that are created by randomly removing the same number of dimensions from the original embeddings as are removed by the INLP guarding function. In doing so we can test the extent to which the loss of the particular information set of interest is responsible for the drop in performance, as opposed to a general loss of information. 
 
-The new embeddings to be tested include the syntactic component, the non-syntactic component, the semantic component and the non-semantic component derived from the probing tasks. Additionally, we can create an embedding that contains syntactic information and removes semantic information by linearly projecting the syntactic component onto the non-semantic component, $v_{syn - sem} = P_{sem} v_{syn}$. Using a similar process, we can create an embedding that contains semantic information and removes the syntactic information present, $v_{sem - syn} = P_{syn} v_{sem}$. Finally, we can create an embedding that contains the semantic information captured by the syntactic component, by linearly projecting the syntactic component onto the semantic component, $v_{syn * sem} = (v_{syn} \cdot v_{sem}) * v_{sem}$. And similarly, we can create an embedding that contains the syntactic information captured by the semantic component, $v_{sem * syn} = (v_{sem} \cdot v_{syn}) * v_{syn}$
+The new embeddings to be tested include the syntactic component, the non-syntactic component, the semantic component and the non-semantic component derived from the probing tasks. Additionally, we can create an embedding that contains syntactic information and removes semantic information by linearly projecting the syntactic component onto the non-semantic component, $v_{syn - sem} = P_{sem} v_{syn}$. Using a similar process, we can create an embedding that contains semantic information and removes the syntactic information present, $v_{sem - syn} = P_{syn} v_{sem}$. Finally, we can create an embedding that contains the semantic information captured by the syntactic component, by linearly projecting the syntactic component onto the semantic component, $v_{syn * sem} = \langle v_{syn} ,v_{sem} \rangle u_{sem}$ where $u_{sem}$ is the unit vector for $v_{sem}$. And similarly, we can create an embedding that contains the syntactic information captured by the semantic component, $v_{sem * syn} = \langle v_{sem} , v_{syn} \rangle  u_{syn}$
 
 We will assess each of these embedding types, the original BERT embeddings and the embeddings created by randomly removing directional information on the CCG and Semantic labeling tasks that were used in the probes. 
 
@@ -171,7 +171,7 @@ We will assess each of these embedding types, the original BERT embeddings and t
 \section{Results}
 \label{sec:result}
 
-We first probe our tasks on the original embeddings, and linear classifers can successfully predict both CCG tags and semantics tags as resulted in table \ref{role description}. Then we apply INLP method to the linear classifers to derive guarding matrices $P_{syn}$ and $P_{sem}$ which will project the embeddings to the nullspace of syntactic space and semantic space respectively. With some linear tranformation with the original embeddings and the guarding matrices, we are able to extract the embeddings described in table \ref{description}. 
+We first probe our tasks on the original embeddings, and linear classifers can successfully predict both CCG tags and semantics tags (around 85\% accuracy) as resulted in table \ref{role description}. Then we apply INLP method to the linear classifers to derive guarding matrices $P_{syn}$ and $P_{sem}$ which will project the embeddings to the nullspace of syntactic space and semantic space respectively. With some linear tranformation with the original embeddings and the guarding matrices, we are able to extract the embeddings described in table \ref{description}. 
 \begin{table}[ht]
     \centering
     \begin{tabular}{p{4cm}p{3cm}}
@@ -179,8 +179,8 @@ We first probe our tasks on the original embeddings, and linear classifers can s
         $v_{orig}$ & Original BERT embeddings  \\
         $v_{nosem} = P_{sem} v_{orig}$ & Gained after INLP with semantics task \\
         $v_{nosyn}= P_{syn} v_{orig}$ & Gained after INLP with syntactic task \\
-        $v_{sem} = v_{orig}-v_{no_sem}$ & Semantics representation \\
-        $v_{syn} = v_{orig}-v_{no_syn}$ & Syntactic representation \\
+        $v_{sem} = v_{orig}-v_{nosem}$ & Semantics representation \\
+        $v_{syn} = v_{orig}-v_{nosyn}$ & Syntactic representation \\
         $v_{syn-sem} = P_{sem} v_{syn}$ &Contains syntactic features only \\
         $v_{sem-syn} = P_{syn} v_{sem}$ &Contains semantic features only \\
         $v_{syn*sem} = \langle v_{syn}, v_{sem} \rangle \cdot \frac{v_{syn}}{\|v_{sem}\|}$ & Syntactic representations projected on semantic space\\
@@ -194,7 +194,7 @@ We first probe our tasks on the original embeddings, and linear classifers can s
     }
 \end{table}
 
-To further compare the impact of INLP, we 
+To further compare the impact of INLP, we conduct experiments with random directions removed. For each embeddings, we record the number of removed directions using $Null(P)$ where $P$ is the projection matrix. For embeddings not derived from matrix multiplication, we obtain the number from $Null(M)$ where $M$ is the embedding matrix with size (768,instance number).\footnote{This is not necessarily equivalent to the number of direction removed. $Null(M) \geq Null(P)$ for the corresponding projection $P$ , but in practice the numbers are very close} Then we create embeddings with the same number of directions randomly removed and probe the tasks. 
 
 \begin{table*}[h]
     \centering
