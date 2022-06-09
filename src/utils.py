@@ -124,7 +124,10 @@ def embeddingComponentBreakdown(x,P_sem,P_syn):
     syn_less_sem_emb = P_sem.matmul(syn_emb)
     sem_less_syn_emb = P_syn.matmul(sem_emb)
 
+    syn_sem_emb = syn_emb - P_sem.matmul(syn_emb)
+    sem_syn_emb = sem_emb - P_syn.matmul(sem_emb)
+
     #syn_sem_emb = syn_emb.dot(sem_emb) * sem_emb/torch.sqrt(torch.sum(sem_emb**2,dim=1))
     #sem_syn_emb = sem_emb.dot(syn_emb) * syn_emb/torch.sqrt(torch.sum(syn_emb**2,dim=1))
 
-    return no_sem_emb.T, no_syn_emb.T, syn_less_sem_emb.T, sem_less_syn_emb.T
+    return no_sem_emb.T, no_syn_emb.T, syn_less_sem_emb.T, sem_less_syn_emb.T, syn_sem_emb.T, sem_syn_emb.T
