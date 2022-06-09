@@ -108,3 +108,22 @@ def train_linear_classifier(X, y, num_epochs, num_tags, input_dim):
 	predictions = logits.argmax(axis=1)
 	accuracy = predictions.float().mean()
 	return linear_model, accuracy
+
+
+def embeddingComponentBreakdown(x,P_sem,P_syn):
+    """
+    Takes in and outputs numpy arrays
+    x is the original BERT embeddings (768,1)
+    P_sem is the projection matrix defined in the INLP loop for the semantic tagging task (768,768)
+    P_syn is the projection matrix defined in the INLP loop for the syntactic tagging task (768,768)
+    """
+    no_sem_emb = P_sem.matmul(x)
+    no_syn_emb = P_syn.matmul(x)
+    sem_emb = x - no_sem_emb
+    syn_emb = x - no_syn_emb
+    syn_less_sem_emb = P_sem.matmul(syn_emb)
+    sem_less_syn_emb = P_syn.matmul(sem_emb)
+    syn_sem_emb = syn_emb.dot(sem_emb) * sem_emb/np.sqrt(sem_emb**2)
+    sem_syn_emb = sem_emb.dot(syn_emb) * syn_emb/np.sqrt(syn_emb**2)
+
+    return no_sem_emb, no_syn_emb, syn_less_sem_emb, sem_less_syn_emb, syn_sem_emb, sem_syn_emb
