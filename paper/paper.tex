@@ -174,8 +174,8 @@ We will assess each of these embedding types, the original BERT embeddings and t
 We first probe our tasks on the original embeddings, and linear classifers can successfully predict both CCG tags and semantics tags (around 85\% testing accuracy) as resulted in table \ref{role description}. Then we apply INLP method to the linear classifers to derive guarding matrices $P_{syn}$ and $P_{sem}$ which will project the embeddings to the nullspace of syntactic space and semantic space respectively. With some linear tranformation with the original embeddings and the guarding matrices, we are able to extract the embeddings described in table \ref{description}. 
 \begin{table}[ht]
     \centering
-    \begin{tabular}{p{4cm}p{3cm}}
-        expression & description\\ \hline 
+    \begin{tabular}{p{4cm}p{3cm}}\hline
+        \textbf{Expression} & \textbf{Description}\\ \hline 
         $v_{orig}$ & Original BERT embeddings  \\
         $v_{nosem} = P_{sem} v_{orig}$ & Gained after INLP with semantics task \\
         $v_{nosyn}= P_{syn} v_{orig}$ & Gained after INLP with syntactic task \\
@@ -207,7 +207,7 @@ To further compare the impact of INLP, we conduct experiments with random direct
 
     Rand($|v_{nosem}|$) & 77 & $84.06\%$ & $87.71\%$ \\
     Rand($|v_{nosyn}|$) & 159 & $82.26\%$ & $87.57\%$ \\
-    Rand($|v_{syn-sem}|$) & 81 & p$83.11\%$ & $87.61\%$ \\
+    Rand($|v_{syn-sem}|$) & 81 & $83.11\%$ & $87.61\%$ \\
     Rand($|v_{sem-syn}|$) & 161 & $82.46\%$ & $86.04\%$ \\
     Rand($|v_{syn*sem}|$) & 0 & p$\%$ & p$\%$ \\
     Rand($|v_{sem*syn}|$) & 0 & p$\%$ & p$\%$ \\
@@ -233,25 +233,21 @@ To further compare the impact of INLP, we conduct experiments with random direct
 
 \section{Discussion}
 \label{sec:discussion}
+The INLP method successfully guard information retrieved from probe task. When performing CCG tagging, the model accuracy drops significantly (from 84.06 \% to 23.76\%), and similarly for semantics tagging. In contrast, when the directions are randomly removed, the performance remains relatively the same for both tasks.
 
-The INLP method successfully guard information retrieved from probe task. When performing CCG tagging, the model accuracy drops significantly (from 84.06 \% to 23.76\%), and similarly for semantics tagging. To measure the relevancy of semantics information to syntactic task, we compared the performance of CCG tagging with embeddings $v_{nosem}$ with that of embeddings $v_{nosyn}$. The both performances have considerable decrease as to the original embeddings. The model is using representation from both space when probe the syntactic task. Meanwhile, the performances of semantics tagging with the two embeddings differ significantly, with $v_{nosyn}$ performs almost three times better than $v_{nosem}$. The result suggests that the semantics task is less dependent on the syntactic information than the opposite direction, which contradicts the assumption that semantics space will be rel
+To measure the relevancy of semantics information to syntactic task, we compared the performance of CCG tagging with embeddings $v_{nosem}$ with that of embeddings $v_{nosyn}$. The both performances have considerable decrease as to the original embeddings. The model is using representation from both space when probe the syntactic task. Meanwhile, the performances of semantics tagging with the two embeddings differ significantly, with $v_{nosyn}$ performs almost three times better than $v_{nosem}$. The result suggests that the semantics task is less dependent on the syntactic information than the opposite direction, which contradicts the assumption that syntactic information will be more pertinent to semantics task than vice versa. 
 
-To investigate the compositionality of semantics space and syntactic space, we also calculated the average cosine simliarity scores between embeddings in table \ref{sim}.
-
-%What do we learn
-%What are some limitations? (only looking at linear info)(only looking at info relevant for these tasks)
-
+We also investigate the compositionality of semantics space and syntactic space, by averaging cosine simliarity scores between embeddings in table \ref{sim}. The simliarity score between $v_orig$ and $v_{nosem}$ is higher than between $v_{orig}$ and $v_{nosyn}$, which might suggest that BERT embeddings contain more syntactic information than semantics. More experiments need to be conducted to verify this assumption.
 
 \begin{table}[h]
     \centering
     \begin{tabular}{p{4cm}p{3cm}}
-        expression & similarity score\\ \hline 
+        \hline
+        \textbf{Expressions} & \textbf{Similarity Score}\\ \hline 
         $v_{orig}, v_{nosem}$ &  $0.4183$ \\ 
         $v_{orig}, v_{nosyn}$ & $0.3609$\\ 
         $v_{nosyn}, v_{nosem}$ & $0.2830$ \\
         $v_{syn-sem}, v_{sem-syn}$ & $0.2579$ \\ 
-
-        
         
         \hline
     \end{tabular}
@@ -259,9 +255,15 @@ To investigate the compositionality of semantics space and syntactic space, we a
     }
 \end{table}
 
+%What do we learn
+%What are some limitations? (only looking at linear info)(only looking at info relevant for these tasks)
+
 
 \section{Conclusion}
 \label{sec:conclusion}
+
+Our probing experiment 
+Though INLP successfully produces the desired guard function, it is worth also worth noting that our dataset is relatively small compared 
 
 %Summarize main finding of the paper
 %mention future work and extensions
