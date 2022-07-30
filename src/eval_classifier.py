@@ -6,23 +6,27 @@ from sklearn.metrics import accuracy_score
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device('cpu')
 
 
-class EvalClassifier(LinearClassifier):
-    def __init__(self,input_embeddings,output,tag_size,dev_x,dev_y):
+class EvalClassifier(torch.nn.Module):
+    def __init__(self,input_embeddings,output,tag_size,hidden_dim,dev_x,dev_y):
         '''
         A Eval Classifier for eval task, inherited from Linear Classifer
         But With batching and different logistics regression
         '''
-        super().__init__(input_embeddings,output,tag_size)
+        super().__init__()
+        self.embeddings = input_embeddings
+        self.output = output
         self.dev_x = dev_x.to(device)
         self.dev_y = dev_y.to(device)
-        # TODO: tranfer output to one hot vector
-        #self.output_vecs = 
-        #self.loss_func = torch.nn.NLLLoss()
+        self.linear = torch.nn.Linear(input_embeddings.shape[1], tag_size,device=device)
+        #self.linear2 = torch.nn.Linear(hidden_dim,tag_size,device=device)
+        self.loss_func = torch.nn.CrossEntropyLoss()
     
     def forward(self,embeddings):
-        fc = self.linear(embeddings)
-        #output_probs = torch.nn.functional.softmax(fc,dim=1)
-        return fc
+        x = self.linear(embeddings)
+        # x = torch.nn.functional.sigmoid(x)
+        # out = self.linear2(x)
+        
+        return x
     
     def batching_data(self,dset='train',batch_size=32):
         if dset == 'train':
@@ -40,8 +44,8 @@ class EvalClassifier(LinearClassifier):
             loss = self.loss_func(dev_pred,self.dev_y)
         return dev_pred, loss.item()
     
-    def optimize(self,batch_size=32, lr=0.001,num_epochs=12):
-        optimizer = torch.optim.Adagrad(self.linear.parameters(), lr = lr)
+    def optimize(self,batch_size=24954, lr=0.01,num_epochs=100):
+        optimizer = torch.optim.AdamW(self.linear.parameters(), lr = lr)
         best_predictions_tr = None
         best_predictions_dv = None
         best_loss=float('inf')

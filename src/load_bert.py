@@ -185,9 +185,9 @@ def encoding_srl(srls:List[Dict], srl_ref=None):
     return srl_ref, res
 
 # loading data from saved pickle files
-train_df = pd.read_pickle('../data/pmb_silver/silver_train.pkl')
-labels = np.concatenate(train_df['ccg_tags'].tolist())
-print(len(np.unique(labels)))
+# train_df = pd.read_pickle('../data/pmb_silver/silver_train.pkl')
+# labels = np.concatenate(train_df['ccg_tags'].tolist())
+# print(len(np.unique(labels)))
 # train_input = train_df['text'].tolist()
 
 # seq_lens = [len(item) for item in train_input]

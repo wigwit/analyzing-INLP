@@ -5,6 +5,9 @@ import numpy as np
 import scipy
 from typing import List
 import tqdm
+import random
+
+#random.seed(42)
 
 ## defining GPU here
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device('cpu')
@@ -20,10 +23,11 @@ class LinearClassifier(torch.nn.Module):
 		dev_y: dev label for stopping criterion
 		'''
 		super().__init__()
+		random.seed(42)
 		## everything defined in GPU
-		self.embeddings = input_embeddings
+		self.embeddings = input_embeddings.double()
 		self.output = output
-		self.linear = torch.nn.Linear(input_embeddings.shape[1], tag_size,device=device)
+		self.linear = torch.nn.Linear(input_embeddings.shape[1], tag_size,device=device,dtype=torch.double)
 		# class weight performs really worse
 		# cls_weight = compute_class_weight('balanced',classes=np.array(range(tag_size)),y=output.numpy())
 		# cls_weight = torch.tensor(cls_weight,dtype=torch.float)
@@ -33,11 +37,24 @@ class LinearClassifier(torch.nn.Module):
 		# embedding size = [batch_size, embed_dim]
 		# output size = [batch_size,tag_size]
 		emb = embeddings.to(device)
+		emb = emb.double()
 		fc = self.linear(emb)
 		return fc
 
+	def eval(self,dev_x,dev_y):
+		with torch.no_grad():
+			# TODO: batching if necessary
+			dev_x = dev_x.to(device)
+			dev_y = dev_y.to(device)
+			dev_pred = self.forward(dev_x)
+			loss = self.loss_func(dev_pred,dev_y)
+
+		final_dev =  torch.argmax(dev_pred,dim=1).cpu().numpy()
+		print(f'dev accuracy score:{accuracy_score(dev_y.cpu().numpy(),final_dev):.4f}')
+		return dev_pred, loss.item()
+
 	
-	def optimize(self,lr=0.01,num_epochs=100):
+	def optimize(self,lr=0.01,num_epochs=10):
 		optimizer = torch.optim.AdamW(self.linear.parameters(), lr = lr)
 		best_predictions = None
 		best_loss = float('inf')
@@ -69,7 +86,7 @@ class LinearClassifier(torch.nn.Module):
 		#final_out = output.numpy()
 		#dev_out = self.dev_y.numpy()
 		train_acc = accuracy_score(self.output.numpy(),final_pred)
-		#print(f'train accuracy score:{train_acc:.4f}')
+		print(f'train accuracy score:{train_acc:.4f}')
 		#print(f'dev accuracy score:{accuracy_score(self.dev_y.numpy(),final_dev):.4f}')
 			
 		return best_model,train_acc
@@ -112,7 +129,8 @@ class INLPTraining(LinearClassifier):
 		## may be empty cache here
 		in_size = self.linear.in_features
 		out_size = self.linear.out_features
-		self.linear = torch.nn.Linear(in_size,out_size,device=device)
+		random.seed(42)
+		self.linear = torch.nn.Linear(in_size,out_size,device=device,dtype=torch.double)
 	
 	def apply_projection(self,P):
 		'''
@@ -121,6 +139,7 @@ class INLPTraining(LinearClassifier):
 		## may be empty cache here
 		P = torch.tensor(P,dtype=torch.float)
 		self.embeddings =  torch.matmul(P,self.original_embedding).T
+		self.embeddings = self.embeddings.double()
 
 	def run_INLP_loop(self,iteration,min_acc=0.0):
 		I = np.eye(self.input_dim)

@@ -11,44 +11,76 @@ from typing import Dict, List
 from utils import bert_tokenization, get_projection_to_intersection_of_nullspaces, get_rowspace_projection, train_linear_classifier
 import numpy as np
 from tqdm import tqdm
+import random
 
 from load_bert import DataProcessing
 from LinearClassifier import LinearClassifier, INLPTraining
 from eval_classifier import EvalClassifier
+
+from argparse import ArgumentParser
+parser = ArgumentParser(__doc__)
+
+parser.add_argument('--dataset',dest='dataset',type=str, default='gold',help='choosing either gold or silver standard data')
+args = parser.parse_args()
 #logging.basicConfig(level-logging.INFO) #turn on detailed logging
 
 ## defining GPU here
+random.seed(42)
+
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device('cpu')
 
-gold_train = DataProcessing('silver','train')
+gold_train = DataProcessing(args.dataset,'train')
 gold_train.bert_tokenize()
 train_emb = gold_train.get_bert_embeddings('load')
 
 ## all in cpu right now
-emb_tr, y_tr, num_tags = gold_train.from_sents_to_words('sem',train_emb)
+emb_tr, y_tr_sem, num_tags_sem = gold_train.from_sents_to_words('syn',train_emb)
+dum, y_tr_syn,num_tags_syn = gold_train.from_sents_to_words('syn',train_emb)
 
-gold_dev = DataProcessing('silver','dev')
+gold_dev = DataProcessing(args.dataset,'test')
 gold_dev.bert_tokenize()
 dev_emb = gold_dev.get_bert_embeddings('load')
 
 ## all in cpu right now
-emb_dev, y_dev, num_tags = gold_dev.from_sents_to_words('sem',dev_emb)
+emb_dev, y_dev_sem, num_tags_sem = gold_dev.from_sents_to_words('syn',dev_emb)
+dum,y_dev_syn,num_tags_syn =gold_dev.from_sents_to_words('syn',dev_emb)
+
 
 if torch.cuda.is_available():
 	torch.cuda.empty_cache()
-print(num_tags)
 
-t = EvalClassifier(emb_tr,y_tr,num_tags,emb_dev,y_dev)
+print(num_tags_syn)
+print(np.unique(y_dev_syn.numpy()))
+
+t = LinearClassifier(emb_tr,y_tr_sem,num_tags_sem)
 t.optimize()
-sys.exit()
 
+t.eval(emb_dev,y_dev_sem)
+
+min_acc = np.bincount(y_tr_sem.numpy()).max()/y_tr_sem.shape[0]
+print(min_acc)
 ## calling INLP
-inlp_syn = INLPTraining(emb_tr,y_tr,num_tags)
+inlp_syn = INLPTraining(emb_tr,y_tr_sem,num_tags_sem)
 # inlp_syn = inlp_syn.to(device)
-P,P_is,Ws=inlp_syn.run_INLP_loop(10)
+P,P_is,Ws=inlp_syn.run_INLP_loop(20,min_acc=min_acc)
 print(f'the rank of P is :{np.linalg.matrix_rank(P)}')
-for P_i in P_is:
-	print(np.linalg.matrix_rank(P_i))
+print(f'the rank gets removed :{768-np.linalg.matrix_rank(P)}')
+# for P_i in P_is:
+# 	print(np.linalg.matrix_rank(P_i))
+
+
+print('AFTER INLP')
+new_emb_tr = inlp_syn.embeddings
+P_t = torch.tensor(P)
+#print(torch.matrix_rank(P_t))
+torch.save(P_t,'syn_space_removed.pt')
+# new_emb_dev = torch.matmul(P_t,emb_dev.T).T
+# t_after = LinearClassifier(new_emb_tr,y_tr_syn,num_tags_syn)
+# print(num_tags_syn)
+# print(np.unique(y_dev_syn.numpy()))
+# t_after.optimize()
+# t.eval(new_emb_dev,y_dev_syn)
+
 
 sys.exit()
 

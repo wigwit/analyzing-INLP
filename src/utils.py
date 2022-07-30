@@ -113,21 +113,39 @@ def train_linear_classifier(X, y, num_epochs, num_tags, input_dim):
 def embeddingComponentBreakdown(x,P_sem,P_syn):
     """
     Takes in and outputs numpy arrays
-    x is the original BERT embeddings (768,1)
+    x is the original BERT embeddings (768,num_inst)
     P_sem is the projection matrix defined in the INLP loop for the semantic tagging task (768,768)
     P_syn is the projection matrix defined in the INLP loop for the syntactic tagging task (768,768)
     """
+    P_sem = P_sem/torch.norm(P_sem)
+    P_syn = P_syn/torch.norm(P_syn)
+    print(torch.norm(P_sem))
     no_sem_emb = P_sem.matmul(x)
     no_syn_emb = P_syn.matmul(x)
     sem_emb = x - no_sem_emb
     syn_emb = x - no_syn_emb
+
+    #<x-nosem,x-nosyn> = <nosem,nosyn> + <x,x> - <x,P_sem x> - <x,P_syn x>
+    print(torch.matrix_rank(sem_emb))
     syn_less_sem_emb = P_sem.matmul(syn_emb)
     sem_less_syn_emb = P_syn.matmul(sem_emb)
 
-    syn_sem_emb = syn_emb - P_sem.matmul(syn_emb)
-    sem_syn_emb = sem_emb - P_syn.matmul(sem_emb)
-
+    # syn_sem_emb = syn_emb - P_sem.matmul(syn_emb)
+    # sem_syn_emb = sem_emb - P_syn.matmul(sem_emb)
+    
+    dot_prod = torch.mul(sem_emb,syn_emb)
+    #print(dot_prod.shape)
+    dot_prod = torch.sum(dot_prod,dim=0)
+    #print(dot_prod.shape)
+    unit_sem = torch.nn.functional.normalize(sem_emb,dim=0)
+    # print(torch.matrix_rank(no_sem_emb))
+    # print(torch.norm(P_sem))
+    # print(torch.norm(P_syn))
+    unit_syn = torch.nn.functional.normalize(syn_emb,dim=0)
+    syn_sem_emb = dot_prod*unit_sem
+    #print(syn_sem_emb.shape)
+    sem_syn_emb = dot_prod*unit_syn
     #syn_sem_emb = syn_emb.dot(sem_emb) * sem_emb/torch.sqrt(torch.sum(sem_emb**2,dim=1))
     #sem_syn_emb = sem_emb.dot(syn_emb) * syn_emb/torch.sqrt(torch.sum(syn_emb**2,dim=1))
 
-    return no_sem_emb.T, no_syn_emb.T, syn_less_sem_emb.T, sem_less_syn_emb.T, syn_sem_emb.T, sem_syn_emb.T
+    return sem_emb.T, syn_emb.T,no_sem_emb.T, no_syn_emb.T, syn_less_sem_emb.T, sem_less_syn_emb.T, syn_sem_emb.T, sem_syn_emb.T
