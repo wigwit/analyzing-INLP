@@ -145,6 +145,7 @@ class INLPTraining(LinearClassifier):
 		I = np.eye(self.input_dim)
 		P = I
 		Ws = []
+		all_P = []
 		rowspace_projections = []
 		for i in range(iteration):
 			self.reinitialize_classifier()
@@ -164,9 +165,10 @@ class INLPTraining(LinearClassifier):
 			# This line is what they showed originally but the function looks weird
 			#P = self.get_projection_to_intersection_of_nullspaces(rowspace_projections)
 			P = np.matmul(P_Nwi,P)
+			all_P.append(P)
 			self.apply_projection(P)
 		
-		return P, rowspace_projections, Ws
+		return P, rowspace_projections, Ws,all_P
 
 
 
