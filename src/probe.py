@@ -21,29 +21,37 @@ from argparse import ArgumentParser
 parser = ArgumentParser(__doc__)
 
 parser.add_argument('--dataset',dest='dataset',type=str, default='gold',help='choosing either gold or silver standard data')
+parser.add_argument('--task',dest='task',type=str,default='syn',help='choosing a task =[syn|sem] for INLP,default is syn')
+parser.add_argument('--load',dest='load',action='store_true', default=False,help='load the preexisting embeddings if it is already generated')
 args = parser.parse_args()
 #logging.basicConfig(level-logging.INFO) #turn on detailed logging
 
 ## defining GPU here
 random.seed(42)
 
+load_option = 'load' if args.load else 'save'
+
+
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device('cpu')
+
+
+print('Loading Dataset: '+args.dataset)
 
 gold_train = DataProcessing(args.dataset,'train')
 gold_train.bert_tokenize()
-train_emb = gold_train.get_bert_embeddings('load')
+train_emb = gold_train.get_bert_embeddings(load_option)
 
 ## all in cpu right now
-emb_tr, y_tr_sem, num_tags_sem = gold_train.from_sents_to_words('syn',train_emb)
-dum, y_tr_syn,num_tags_syn = gold_train.from_sents_to_words('syn',train_emb)
+emb_tr, y_tr_sem, num_tags_sem = gold_train.from_sents_to_words(args.task,train_emb)
+dum, y_tr_syn,num_tags_syn = gold_train.from_sents_to_words(args.task,train_emb)
 
 gold_dev = DataProcessing(args.dataset,'test')
 gold_dev.bert_tokenize()
-dev_emb = gold_dev.get_bert_embeddings('load')
+dev_emb = gold_dev.get_bert_embeddings(load_option)
 
 ## all in cpu right now
-emb_dev, y_dev_sem, num_tags_sem = gold_dev.from_sents_to_words('syn',dev_emb)
-dum,y_dev_syn,num_tags_syn =gold_dev.from_sents_to_words('syn',dev_emb)
+emb_dev, y_dev_sem, num_tags_sem = gold_dev.from_sents_to_words(args.task,dev_emb)
+dum,y_dev_syn,num_tags_syn =gold_dev.from_sents_to_words(args.task,dev_emb)
 
 
 if torch.cuda.is_available():
@@ -52,6 +60,8 @@ if torch.cuda.is_available():
 print(num_tags_syn)
 print(np.unique(y_dev_syn.numpy()))
 
+print('Testing Linear Classifer for task'+args.task)
+
 t = LinearClassifier(emb_tr,y_tr_sem,num_tags_sem)
 t.optimize()
 
@@ -59,6 +69,8 @@ t.eval(emb_dev,y_dev_sem)
 
 min_acc = np.bincount(y_tr_sem.numpy()).max()/y_tr_sem.shape[0]
 print(min_acc)
+
+print('Testing INLP Loop for task: '+args.task)
 ## calling INLP
 inlp_syn = INLPTraining(emb_tr,y_tr_sem,num_tags_sem)
 # inlp_syn = inlp_syn.to(device)
@@ -76,7 +88,8 @@ print('AFTER INLP')
 new_emb_tr = inlp_syn.embeddings
 P_t = torch.tensor(P)
 #print(torch.matrix_rank(P_t))
-torch.save(P_t,'syn_space_removed.pt')
+save_path_inlp = '../data/pmb_'+args.dataset+'/'+args.task+'_space_removed.pt'
+torch.save(P_t,save_path_inlp)
 # new_emb_dev = torch.matmul(P_t,emb_dev.T).T
 # t_after = LinearClassifier(new_emb_tr,y_tr_syn,num_tags_syn)
 # print(num_tags_syn)
