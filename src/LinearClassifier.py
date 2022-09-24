@@ -1,6 +1,7 @@
 import torch
 from sklearn.metrics import accuracy_score
 from sklearn.utils.class_weight import compute_class_weight
+from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 import numpy as np
 import scipy
 from typing import List
@@ -54,25 +55,37 @@ class LinearClassifier(torch.nn.Module):
 		return dev_pred, loss.item()
 
 	
+	def batched_input(self,*args,batch_size=64):
+		data_set = TensorDataset(args[0],args[1])
+		dataloader = DataLoader(data_set,batch_size=batch_size)
+		return dataloader
+	
 	def optimize(self,lr=0.01,num_epochs=10):
 		optimizer = torch.optim.AdamW(self.linear.parameters(), lr = lr)
 		best_predictions = None
 		best_loss = float('inf')
 		stop_count = 0
 		output = self.output.to(device)
+		dataloader = self.batched_input(self.embeddings,output)
 		for epoch in range(num_epochs):
-			preds = self.forward(self.embeddings)
-			# print(preds.shape)
-			# print(self.output.shape)
-			loss = self.loss_func(preds,output)
+			preds = []
+			total_loss = 0
+			for emb,label in dataloader:
+				optimizer.zero_grad()
+				pred = self.forward(emb)
+				loss = self.loss_func(pred,label)
+				loss.backward(retain_graph=True)
+				optimizer.step()
+				pred = pred.to('cpu')
+				preds.append(pred)
+				total_loss += loss.item()
 			
-			optimizer.zero_grad()
-			loss.backward(retain_graph=True)
-			optimizer.step()
+			total_loss = total_loss/len(dataloader)
+			preds = torch.cat(preds)
 			#print(f'epoch: {epoch+1}, loss = {loss.item():.4f}')
 			#implement stopping criterion
-			if loss.item()<best_loss:
-				best_loss=loss.item()
+			if total_loss<best_loss:
+				best_loss=total_loss
 				best_model= self.linear
 				best_predictions = preds
 				stop_count=0
