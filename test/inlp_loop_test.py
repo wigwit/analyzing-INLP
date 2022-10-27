@@ -28,7 +28,7 @@ class LinearClassifier(torch.nn.Module):
         super().__init__()
         random.seed(42)
         ## everything defined in GPU
-        self.embeddings = input_embeddings.double()
+        self.embeddings = input_embeddings
         self.output = output
         self.linear = torch.nn.Linear(input_embeddings.shape[1], tag_size, device=device, dtype=torch.double)
         # class weight performs really worse
@@ -90,7 +90,7 @@ class LinearClassifier(torch.nn.Module):
                 best_predictions = preds
                 stop_count = 0
             else:
-                if stop_count == 3:
+                if stop_count == 5:
                     break
                 else:
                     stop_count += 1
@@ -106,8 +106,7 @@ class LinearClassifier(torch.nn.Module):
 
 
 # Functions adapted from INLPTraining in LinearClassifier.py
-def get_rowspace_projection(model_weight):
-    W = model_weight
+def get_rowspace_projection(W):
     if np.allclose(W, 0):
         w_basis = np.zeros_like(W.T)
     else:
@@ -146,9 +145,9 @@ def apply_projection(original_embedding, P):
     applying projection of P to the embedding vectors
     '''
     ## may be empty cache here
-    P = torch.tensor(P, dtype=torch.float)
-    embeddings = torch.matmul(P, original_embedding).T
-    embeddings = embeddings.double()
+    P = torch.tensor(P, dtype=torch.double)
+    embeddings = torch.matmul(P, original_embedding.T)
+    embeddings = embeddings.T.double()
     return embeddings
 
 
@@ -156,48 +155,87 @@ def apply_projection(original_embedding, P):
 N = 1000
 d = 300
 X0 = np.random.rand(N, d) - 0.5
+X0 = torch.tensor(X0)
 X = X0
 Y = np.array([1 if sum(x) > 0 else 0 for x in X])  # X < 0 #np.random.rand(N) < 0.5 #(X + 0.01 * (np.random.rand(*X.shape) - 0.5)) < 0 #np.random.rand(5000) < 0.5
+Y = torch.tensor(Y)
 
 input_dim = X.shape[1]
 n_classes = 2
 iteration = 500
-min_acc = 0.0
+min_acc = Y.sum().item() / Y.shape[0] # This only works for 2 classes
 
 # Track matrix ranks throughout loop
 p_rank_hx = [0]
 emb_rank_hx = [matrix_rank(X)]
+x1_rank_hx = [matrix_rank(X)]
 
 I = np.eye(input_dim)
 P = I
 Ws = []
 all_P = []
 rowspace_projections = []
-for i in range(iteration):
+
+# This should really be a while loop that stops when we pass the accuracy threshold
+i = 0
+acc = 100*min_acc
+P_Nwi = np.eye(X.shape[1])
+while acc > min_acc :
+
     #linear_model = reinitialize_classifier(in_size=d, out_size=n_classes)
     linear_model = LinearClassifier(input_embeddings=X, output=Y, tag_size=n_classes)
     bm, acc = linear_model.optimize()
-    print(f'train acc for round {i} is {acc:.4f}')
-    if acc < min_acc:
-        break
     W = bm.weight.detach().cpu().numpy()
     Ws.append(W)
+
     # Noted this is the projection space for W, not the null space
     P_rowspace_wi = get_rowspace_projection(W)
     rowspace_projections.append(P_rowspace_wi)
+
     # This line is supposed to get the null space for the projection space of W
     # Intuitively I think the rank makes sense, but I don't know how this will hold
-    P_Nwi = I - P_rowspace_wi
+    #P_Nwi = I - P_rowspace_wi
+
+    # Reverting back to their original code
+    P_Nwi = get_projection_to_intersection_of_nullspaces(input_dim=P_rowspace_wi.shape[0],
+                                                         rowspace_projection_matrices=rowspace_projections)
+
     # This line is what they showed originally but the function looks weird
     # P = self.get_projection_to_intersection_of_nullspaces(rowspace_projections)
     P = np.matmul(P_Nwi, P)
     all_P.append(P)
-    X = apply_projection(X,P)
+    X = apply_projection(X0,P)
 
-    #record rank
+    # For testing purposes: should be same as emb_rank_hx
+    X1 = apply_projection(X,P_Nwi)
+    x1_rank_hx.append(matrix_rank(X1))
+
+    # Record rank
     p_rank = matrix_rank(P)
     p_rank_hx.append(p_rank)
     x_rank = matrix_rank(X)
     emb_rank_hx.append(x_rank)
 
-#Check out the following: P, rowspace_projections, Ws, all_P
+    # Reset the linear model parameter cache
+    linear_model.linear.reset_parameters()
+
+    i += 1
+    print(f'{i}. Accuracy is {acc}')
+
+print(p_rank_hx)
+print(emb_rank_hx)
+print(x1_rank_hx)
+
+# Quick check to ensure X1 and X are the same
+X1[:3,:3]
+X[:3,:3]
+
+
+# Lindsay's Notes:
+    # I suspect training for 10 epochs was not enough, should be something like 500. Ideally we'd train long enough for
+        #early stopping to be triggered so we can feel confident the model has converged
+    # Nullspace projection calculation appeared to be wrong, reverted to code in the gh repo
+    # min_accuracy was set to 0, should be percent of majority class in training output
+    # should use a while loop that compares acc and min_acc, not pre-set number of iterations
+    # tried replacing the rowspace projection calculation step with P_Nwi -= P_rowspace_wi but didn't work as well, so
+        # keeping the original code from the gh repo
