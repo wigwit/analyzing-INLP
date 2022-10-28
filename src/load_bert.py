@@ -24,7 +24,7 @@ class DataProcessing:
     '''
     A class for processing data and get right format of input output for model
     '''
-    def __init__(self, standard,dset):
+    def __init__(self, standard, dset):
         '''
         standard = {gold,silver}
         dset = {train,test,dev}
