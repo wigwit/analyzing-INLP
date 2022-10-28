@@ -52,7 +52,7 @@ class DataProcessing:
     
     def get_bert_embeddings(self,load_option='save'):
 
-        load_path = '../data/pmb_'+self.standard+'/'+self.standard+'_'+self.dset+'layer1_emb.pt'
+        load_path = '../data/pmb_'+self.standard+'/'+self.standard+'_'+self.dset+'_emb.pt'
 
         if load_option == 'load':
             output_tensor = torch.load(load_path)
@@ -82,7 +82,8 @@ class DataProcessing:
                     # print(type(output.hidden_states))
                     # print(output.hidden_states[0].shape)
                     # sys.exit()
-                    outputs.append(output.hidden_states[12])
+                    outputs.append(output[0])
+                    #outputs.append(output.hidden_states[12])
             
             output_tensor = torch.cat(outputs).detach().cpu()
             if load_option == 'save':

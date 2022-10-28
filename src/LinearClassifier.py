@@ -124,7 +124,7 @@ class INLPTraining(LinearClassifier):
 		P_W = w_basis.dot(w_basis.T) # orthogonal projection on W's rowspace
 		return P_W
 	
-	def get_projection_to_intersection_of_nullspaces(self, rowspace_projection_matrices: List[np.ndarray]):
+	def get_projection_to_intersection_of_nullspaces(self, input_dim,rowspace_projection_matrices: List[np.ndarray]):
 		"""
 		Given a list of rowspace projection matrices P_R(w_1), ..., P_R(w_n),
 		this function calculates the projection to the intersection of all nullspasces of the matrices w_1, ..., w_n.
@@ -134,7 +134,7 @@ class INLPTraining(LinearClassifier):
 		:param input_dim: input dim
 		"""
 		# This is werid because Q is not normalized so the N(P) = I-P does not work
-		I = np.eye(self.input_dim)
+		I = np.eye(input_dim)
 		Q = np.sum(rowspace_projection_matrices, axis=0)
 		P = I - self.get_rowspace_projection(Q)
 		return P
@@ -177,7 +177,8 @@ class INLPTraining(LinearClassifier):
 			rowspace_projections.append(P_rowspace_wi)
 			# This line is supposed to get the null space for the projection space of W
 			# Intuitively I think the rank makes sense, but I don't know how this will hold
-			P_Nwi = I - P_rowspace_wi
+			P_Nwi = self.get_projection_to_intersection_of_nullspaces(input_dim=P_rowspace_wi.shape[0],
+                                                         rowspace_projection_matrices=rowspace_projections)
 			# This line is what they showed originally but the function looks weird
 			#P = self.get_projection_to_intersection_of_nullspaces(rowspace_projections)
 			P = np.matmul(P_Nwi,P)
