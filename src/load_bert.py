@@ -52,7 +52,7 @@ class DataProcessing:
     
     def get_bert_embeddings(self,load_option='save'):
 
-        load_path = '../data/pmb_'+self.standard+'/'+self.standard+'_'+self.dset+'_emb.pt'
+        load_path = '../data/pmb_'+self.standard+'/'+self.standard+'_'+self.dset+'layer1_emb.pt'
 
         if load_option == 'load':
             output_tensor = torch.load(load_path)
@@ -61,7 +61,7 @@ class DataProcessing:
         else:
             input_seqs = self.tokens['input_ids']
             input_mask = self.tokens['attention_mask']
-            model = AutoModel.from_pretrained('bert-base-uncased')
+            model = AutoModel.from_pretrained('bert-base-uncased',output_hidden_states=True)
             model = model.to(device)
 
             ## batching data
@@ -78,7 +78,11 @@ class DataProcessing:
                     word_ids = word_ids.to(device)
                     mask = mask.to(device)
                     output = model(word_ids,attention_mask=mask)
-                    outputs.append(output[0])
+                    # print(len(output.hidden_states))
+                    # print(type(output.hidden_states))
+                    # print(output.hidden_states[0].shape)
+                    # sys.exit()
+                    outputs.append(output.hidden_states[12])
             
             output_tensor = torch.cat(outputs).detach().cpu()
             if load_option == 'save':

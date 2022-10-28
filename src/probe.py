@@ -74,7 +74,7 @@ print('Testing INLP Loop for task: '+args.task)
 ## calling INLP
 inlp_syn = INLPTraining(emb_tr,y_tr_sem,num_tags_sem)
 # inlp_syn = inlp_syn.to(device)
-P,P_is,Ws,Ps=inlp_syn.run_INLP_loop(20,min_acc=min_acc)
+P,P_is,Ws,Ps=inlp_syn.run_INLP_loop(20,dev_x=emb_dev,dev_y=y_dev_sem,min_acc=min_acc)
 print(f'the rank of P is :{np.linalg.matrix_rank(P)}')
 print(f'the rank gets removed :{768-np.linalg.matrix_rank(P)}')
 

@@ -51,8 +51,9 @@ class LinearClassifier(torch.nn.Module):
 			loss = self.loss_func(dev_pred,dev_y)
 
 		final_dev =  torch.argmax(dev_pred,dim=1).cpu().numpy()
-		print(f'dev accuracy score:{accuracy_score(dev_y.cpu().numpy(),final_dev):.4f}')
-		return dev_pred, loss.item()
+		acc = accuracy_score(dev_y.cpu().numpy(),final_dev)
+		print(f'dev accuracy score:{acc:.4f}')
+		return dev_pred, loss.item(),acc
 
 	
 	def batched_input(self,*args,batch_size=64):
@@ -154,7 +155,7 @@ class INLPTraining(LinearClassifier):
 		self.embeddings =  torch.matmul(P,self.original_embedding).T
 		self.embeddings = self.embeddings.double()
 
-	def run_INLP_loop(self,iteration,min_acc=0.0):
+	def run_INLP_loop(self,iteration,dev_x=None,dev_y=None,min_acc=0.0):
 		I = np.eye(self.input_dim)
 		P = I
 		Ws = []
@@ -163,7 +164,9 @@ class INLPTraining(LinearClassifier):
 		for i in range(iteration):
 			self.reinitialize_classifier()
 			bm,acc=self.optimize()
-			print(f'train acc for round {i} is {acc:.4f}')
+			if dev_x is not None:
+				dum1,dum2,acc=self.eval(dev_x,dev_y)
+				print(f'dev acc for round {i} is {acc:.4f}')
 			if acc < min_acc:
 				# TODO: not sure it should be continue here
 				break
