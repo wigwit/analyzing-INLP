@@ -117,9 +117,6 @@ def embeddingComponentBreakdown(x,P_sem,P_syn):
     P_sem is the projection matrix defined in the INLP loop for the semantic tagging task (768,768)
     P_syn is the projection matrix defined in the INLP loop for the syntactic tagging task (768,768)
     """
-    P_sem = P_sem/torch.norm(P_sem)
-    P_syn = P_syn/torch.norm(P_syn)
-    print(torch.norm(P_sem))
     no_sem_emb = P_sem.matmul(x)
     no_syn_emb = P_syn.matmul(x)
     sem_emb = x - no_sem_emb
