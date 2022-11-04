@@ -7,30 +7,51 @@ from eval_classifier import EvalClassifier
 
 from utils import embeddingComponentBreakdown,remove_random_directions
 
-P_sem = torch.load('sem_space_removed.pt')
-P_syn = torch.load('syn_space_removed.pt')
+
+from argparse import ArgumentParser
+parser = ArgumentParser(__doc__)
+
+parser.add_argument('--random',dest='random',action='store_true',default=False,help='nulling out random directions')
+parser.add_argument('--task',dest='task',type=str,default='syn',help='choosing a task =[syn|sem] for probing task after INLP,default is syn')
+
+args = parser.parse_args()
+
+null_task = 'syn' if args.task == 'sem' else 'sem'
+
+if not args.random:
+    print('null task: '+null_task)
+else:
+    print('null task: random')
+
+P_null = torch.load('../data/pmb_gold/'+null_task+'_space_removed.pt')
+print('evaluation task: '+ args.task)
+
+
+
+# P_sem = torch.load('../data/pmb_gold/sem_space_removed.pt')
+# P_syn = torch.load('../data/pmb_gold/syn_space_removed.pt')
 
 gold_train = DataProcessing('gold','train')
 gold_train.bert_tokenize()
 train_emb = gold_train.get_bert_embeddings('load')
 
-emb_tr, y_tr_syn,num_tags_syn = gold_train.from_sents_to_words('syn',train_emb)
+emb_tr, y_tr,num_tags = gold_train.from_sents_to_words(args.task,train_emb)
 
 
 gold_dev = DataProcessing('gold','test')
 gold_dev.bert_tokenize()
 dev_emb = gold_dev.get_bert_embeddings('load')
 
-emb_dev, y_dev_syn, dum = gold_dev.from_sents_to_words('syn',dev_emb)
+emb_dev, y_dev, dum = gold_dev.from_sents_to_words(args.task,dev_emb)
 
 # print(P_sem.shape)
 # print(P_syn.shape)
-new_emb_trs = embeddingComponentBreakdown(emb_tr.T.double(),P_sem,P_syn)
-new_emb_devs = embeddingComponentBreakdown(emb_dev.T.double(),P_sem,P_syn)
-sim =torch.nn.functional.cosine_similarity(new_emb_trs[1],new_emb_trs[0])
-print(sum(sim)/len(sim))
+# new_emb_trs = embeddingComponentBreakdown(emb_tr.T.double(),P_sem,P_syn)
+# new_emb_devs = embeddingComponentBreakdown(emb_dev.T.double(),P_sem,P_syn)
+# sim =torch.nn.functional.cosine_similarity(new_emb_trs[1],new_emb_trs[0])
+# print(sum(sim)/len(sim))
 
-sys.exit()
+# sys.exit()
 # print(new_emb_trs[4].shape)
 # print(768-torch.matrix_rank(new_emb_trs[4]))
 
@@ -45,9 +66,22 @@ sys.exit()
 # new_emb_tr = torch.tensor(new_emb_tr)
 # new_emb_dev = torch.tensor(new_emb_dev)
 
-t_after = LinearClassifier(new_emb_trs[4],y_tr_syn,num_tags_syn)
+# train_no_sem = P_sem.matmul(emb_tr.T.double()).T
+# dev_no_sem = P_sem.matmul(emb_dev.T.double()).T
+
+# train_no_syn = P_syn.matmul(emb_tr.T.double()).T
+# train_no_syn = P_syn.matmul(emb_tr.T.double()).T
+
+if not args.random:
+    train_nulled = P_null.matmul(emb_tr.T.double()).T
+    dev_nulled = P_null.matmul(emb_dev.T.double()).T
+else:
+    d = 768-torch.linalg.matrix_rank(P_null).item()
+    train_nulled = torch.tensor(remove_random_directions(emb_tr.numpy(),d))
+    dev_nulled = torch.tensor(remove_random_directions(emb_dev.numpy(),d))
+t_after = LinearClassifier(train_nulled,y_tr,num_tags)
 t_after.optimize()
-t_after.eval(new_emb_devs[4],y_dev_syn)
+t_after.eval(dev_nulled,y_dev)
 
 
 # print(768-torch.matrix_rank(P_sem))
