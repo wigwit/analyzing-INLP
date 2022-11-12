@@ -2,15 +2,9 @@
 
 import torch
 from sklearn.metrics import accuracy_score
-from sklearn.utils.class_weight import compute_class_weight
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-import numpy as np
-import scipy
-from typing import List
-import tqdm
 import random
 
-#random.seed(42)
 
 ## defining GPU here
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device('cpu')
