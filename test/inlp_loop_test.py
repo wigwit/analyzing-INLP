@@ -105,7 +105,7 @@ class LinearClassifier(torch.nn.Module):
         return best_model, train_acc
 
 
-# Functions adapted from INLPTraining in LinearClassifier.py
+# Functions adapted from INLPTraining in linear_classifier.py
 def get_rowspace_projection(W):
     if np.allclose(W, 0):
         w_basis = np.zeros_like(W.T)

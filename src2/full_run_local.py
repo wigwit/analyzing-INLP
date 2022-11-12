@@ -1,4 +1,5 @@
-# Single python script that runs the full training loop and INLP locally, decomposes the BERT embeddings and evaluates the results
+"""Single python script that runs the full training loop and INLP locally, decomposes the BERT embeddings and evaluates
+the results"""
 
 # Libraries
 
