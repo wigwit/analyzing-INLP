@@ -1,6 +1,6 @@
 from re import M
 import torch
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoTokenizer, AutoModel, tokenization_utils_base
 import sys
 import logging
 import pandas as pd
@@ -10,7 +10,7 @@ import json
 import pickle
 import numpy as np
 from collections import defaultdict
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from utils import bert_tokenization
 from sklearn import preprocessing
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
@@ -24,7 +24,7 @@ class DataProcessing:
     '''
     A class for processing data and get right format of input output for model
     '''
-    def __init__(self, standard, dset):
+    def __init__(self, standard: str, dset: str):
         '''
         standard = {gold,silver}
         dset = {train,test,dev}
@@ -34,7 +34,7 @@ class DataProcessing:
         path = '../data/pmb_'+standard+'/'+standard+'_'+dset+'.pkl'
         self.input_df = pd.read_pickle(path)
     
-    def bert_tokenize(self,max_len=32):
+    def bert_tokenize(self,max_len: int=32) -> tokenization_utils_base.BatchEncoding:
         '''
         Returns Bert tokenized objects
         '''
@@ -50,8 +50,10 @@ class DataProcessing:
         return self.tokens
     
     
-    def get_bert_embeddings(self,load_option='save'):
-
+    def get_bert_embeddings(self,load_option='save') -> torch.tensor:
+        '''
+        Returns Bert embedding for each token
+        '''
         load_path = '../data/pmb_'+self.standard+'/'+self.standard+'_'+self.dset+'_emb.pt'
 
         if load_option == 'load':
@@ -91,7 +93,7 @@ class DataProcessing:
         
         return output_tensor
 
-    def from_sents_to_words(self,task_keyword,output):
+    def from_sents_to_words(self,task_keyword: str,output: torch.tensor) -> Tuple[torch.tensor,torch.Tensor]:
         '''
         this function checks the tokenization process and transfer data into word level
         Arguments:
@@ -108,7 +110,7 @@ class DataProcessing:
             input_y = self.input_df['semantics_tags'].tolist()
         
         with open('../data/pmb_'+self.standard+'/'+task_keyword+'_mapping.json') as f:
-                label_encoder = json.load(f)
+            label_encoder = json.load(f)
 
         ## mapping tokens back to word ids
         word_inds = [self.tokens.word_ids(i) for i in range(len(input_y))]
@@ -150,7 +152,7 @@ class DataProcessing:
 
 #wnl = WordNetLemmatizer()
 
-def encoding_srl(srls:List[Dict], srl_ref=None):
+def encoding_srl(srls:List[Dict], srl_ref: dict=None):
     '''
     This function returns the encoded form of the SRL categories
     and an ordered dictionary for reference. The encoded SRL is a
@@ -190,12 +192,12 @@ def encoding_srl(srls:List[Dict], srl_ref=None):
     return srl_ref, res
 
 # loading data from saved pickle files
-# train_df = pd.read_pickle('../data/pmb_silver/silver_train.pkl')
-# labels = np.concatenate(train_df['ccg_tags'].tolist())
-# print(len(np.unique(labels)))
-# train_input = train_df['text'].tolist()
+#train_df = pd.read_pickle('../data/pmb_silver/silver_train.pkl')
+#labels = np.concatenate(train_df['ccg_tags'].tolist())
+#print(len(np.unique(labels)))
+#train_input = train_df['text'].tolist()
 
-# seq_lens = [len(item) for item in train_input]
+#seq_lens = [len(item) for item in train_input]
 # ## after doing some digging I decide to set max_len to be 75 to save computation
 # ## This is because the total instances = 66582 and filtered instances = 66364
 # max_len = 32
@@ -208,7 +210,7 @@ def encoding_srl(srls:List[Dict], srl_ref=None):
 # train_st = train_df['semantics_tags'].tolist()
 
 # ## input for the model
-# tokens, train_seq,train_mask = bert_tokenization(train_input, tokenizer,max_len=32)
+#tokens, train_seq,train_mask = bert_tokenization(train_input, tokenizer,max_len=32)
 # # print(train_seq,train_mask)
 # # print(train_input[30])
 # # detok = tokenizer.decode(train_seq[0])
