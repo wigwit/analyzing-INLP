@@ -49,12 +49,15 @@ class DataProcessing:
         self.tokens = tokens
         return self.tokens
     
-    
-    def get_bert_embeddings(self,load_option='save') -> torch.tensor:
-        '''
-        Returns Bert embedding for each token
-        '''
-        load_path = '../data/pmb_'+self.standard+'/'+self.standard+'_'+self.dset+'_emb.pt'
+
+    def get_bert_embeddings(self,load_option='save', layerwise = -1):
+
+        if layerwise == -1:
+            load_path = '../data/pmb_'+self.standard+'/'+self.standard+'_'+self.dset+'_emb.pt'
+        elif layerwise <= 12 | layerwise >= 1:
+            load_path = '../data/pmb_'+self.standard+'/'+self.standard+'_'+self.dset+'_'+str(layerwise)+'_emb.pt'
+        else:
+            raise Exception('Please enter a number between 1 and 12, otherwise omit this parameter')
 
         if load_option == 'load':
             output_tensor = torch.load(load_path)
@@ -84,9 +87,10 @@ class DataProcessing:
                     # print(type(output.hidden_states))
                     # print(output.hidden_states[0].shape)
                     # sys.exit()
-                    outputs.append(output[0])
-                    #outputs.append(output.hidden_states[12])
-            
+                    # outputs.append(output[0])
+                    outputs.append(output.hidden_states[layerwise])
+            # print('output length')
+            # print(len(outputs))
             output_tensor = torch.cat(outputs).detach().cpu()
             if load_option == 'save':
                 torch.save(output_tensor,load_path)

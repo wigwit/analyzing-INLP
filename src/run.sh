@@ -2,6 +2,6 @@
 
 source ~/anaconda3/etc/profile.d/conda.sh
 
-conda activate news_emo
+conda activate 575env
 
-python probe.py --dataset gold --task sem --load
+python debug.py --dataset gold --task sem

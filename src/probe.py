@@ -30,75 +30,128 @@ args = parser.parse_args()
 random.seed(42)
 
 load_option = 'load' if args.load else 'save'
+# layerwise = 4
+
+investigate_layer = 3
+projection_layer = 5
 
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device('cpu')
 
 
-print('Loading Dataset: '+args.dataset)
+# print('Loading Dataset: '+args.dataset)
 
-gold_train = DataProcessing(args.dataset,'train')
-gold_train.bert_tokenize()
-train_emb = gold_train.get_bert_embeddings(load_option)
+# gold_train = DataProcessing(args.dataset,'train')
+# gold_train.bert_tokenize()
+# train_emb = gold_train.get_bert_embeddings(load_option, layerwise=layerwise)
 
-## all in cpu right now
-emb_tr, y_tr_sem, num_tags_sem = gold_train.from_sents_to_words(args.task,train_emb)
-dum, y_tr_syn,num_tags_syn = gold_train.from_sents_to_words(args.task,train_emb)
+# ## all in cpu right now
+# emb_tr, y_tr_sem, num_tags_sem = gold_train.from_sents_to_words(args.task,train_emb)
+# dum, y_tr_syn,num_tags_syn = gold_train.from_sents_to_words(args.task,train_emb)
 
-gold_dev = DataProcessing(args.dataset,'test')
-gold_dev.bert_tokenize()
-dev_emb = gold_dev.get_bert_embeddings(load_option)
+# gold_dev = DataProcessing(args.dataset,'test')
+# gold_dev.bert_tokenize()
+# dev_emb = gold_dev.get_bert_embeddings(load_option, layerwise=layerwise)
 
-## all in cpu right now
-emb_dev, y_dev_sem, num_tags_sem = gold_dev.from_sents_to_words(args.task,dev_emb)
-dum,y_dev_syn,num_tags_syn =gold_dev.from_sents_to_words(args.task,dev_emb)
-
-
-if torch.cuda.is_available():
-	torch.cuda.empty_cache()
-
-print(num_tags_syn)
-print(np.unique(y_dev_syn.numpy()))
-
-print('Testing Linear Classifer for task'+args.task)
-
-t = LinearClassifier(emb_tr,y_tr_sem,num_tags_sem)
-t.optimize()
-
-t.eval(emb_dev,y_dev_sem)
-
-min_acc = np.bincount(y_tr_sem.numpy()).max()/y_tr_sem.shape[0]
-print(min_acc)
-
-print('Testing INLP Loop for task: '+args.task)
-## calling INLP
-inlp_syn = INLPTraining(emb_tr,y_tr_sem,num_tags_sem)
-# inlp_syn = inlp_syn.to(device)
-P,P_is,Ws,Ps=inlp_syn.run_INLP_loop(20,dev_x=emb_dev,dev_y=y_dev_sem,min_acc=min_acc)
-print(f'the rank of P is :{np.linalg.matrix_rank(P)}')
-print(f'the rank gets removed :{768-np.linalg.matrix_rank(P)}')
-
-for index,m in enumerate(Ps):
-	print(f'the rank of each iteration is :{np.linalg.matrix_rank(m)}')
-# for P_i in P_is:
-# 	print(np.linalg.matrix_rank(P_i))
+# ## all in cpu right now
+# emb_dev, y_dev_sem, num_tags_sem = gold_dev.from_sents_to_words(args.task,dev_emb)
+# dum,y_dev_syn,num_tags_syn =gold_dev.from_sents_to_words(args.task,dev_emb)
 
 
-print('AFTER INLP')
-new_emb_tr = inlp_syn.embeddings
-P_t = torch.tensor(P)
-#print(torch.matrix_rank(P_t))
-save_path_inlp = '../data/pmb_'+args.dataset+'/'+args.task+'_space_removed.pt'
-torch.save(P_t,save_path_inlp)
-# new_emb_dev = torch.matmul(P_t,emb_dev.T).T
-# t_after = LinearClassifier(new_emb_tr,y_tr_syn,num_tags_syn)
+# if torch.cuda.is_available():
+# 	torch.cuda.empty_cache()
+
 # print(num_tags_syn)
 # print(np.unique(y_dev_syn.numpy()))
-# t_after.optimize()
-# t.eval(new_emb_dev,y_dev_syn)
 
+# print('Testing Linear Classifer for task'+args.task)
+
+# t = LinearClassifier(emb_tr,y_tr_sem,num_tags_sem)
+# t.optimize()
+
+# t.eval(emb_dev,y_dev_sem)
+
+# min_acc = np.bincount(y_tr_sem.numpy()).max()/y_tr_sem.shape[0]
+# print(min_acc)
+
+# print('Testing INLP Loop for task: '+args.task)
+# ## calling INLP
+# inlp_syn = INLPTraining(emb_tr,y_tr_sem,num_tags_sem)
+# inlp_syn = inlp_syn.to(device)
+# P,P_is,Ws,Ps=inlp_syn.run_INLP_loop(20,dev_x=emb_dev,dev_y=y_dev_sem,min_acc=min_acc)
+# print(f'the rank of P is :{np.linalg.matrix_rank(P)}')
+# print(f'the rank gets removed :{768-np.linalg.matrix_rank(P)}')
+
+# for index,m in enumerate(Ps):
+# 	print(f'the rank of each iteration is :{np.linalg.matrix_rank(m)}')
+# # for P_i in P_is:
+# # 	print(np.linalg.matrix_rank(P_i))
+
+
+# print('############# AFTER INLP #############')
+# new_emb_tr = inlp_syn.embeddings
+# P_t = torch.tensor(P)
+# #print(torch.matrix_rank(P_t))
+# if layerwise == -1:
+# 	save_path_inlp = '../data/pmb_'+args.dataset+'/'+args.task+'_space_removed.pt'
+# else:
+# 	save_path_inlp = '../data/pmb_'+args.dataset+'/'+args.task+'_space_removed'+'_'+str(layerwise)+'.pt'
+# torch.save(P_t,save_path_inlp)
+# print('tensor types')
+# print(P_t.type())
+# print(emb_dev.type())
+# P_t = P_t.type(torch.float)
+# new_emb_dev = torch.matmul(P_t,emb_dev.T).T
+# t_after = LinearClassifier(new_emb_tr,y_tr_syn,num_tags_syn)
+# print('number of tags syntax?')
+# print(num_tags_syn)
+# print('number of unique syntax things?')
+# print(np.unique(y_dev_syn.numpy()))
+# t_after.optimize()
+# print('eval result')
+# t_after.eval(new_emb_dev,y_dev_syn)
+
+
+print('### explore whether the projection matrices are all the same ###')
+for i in range(1, 7):
+	print('calculating the cosine similarity between the projection matrix of layer {}'.format(i))
+	P_i = torch.load('../data/pmb_'+args.dataset+'/'+args.task+'_space_removed'+'_'+str(i)+'.pt')
+
+print('### use one projection matrix on another layer ###')
+print('### currently using projection matrix for layer {} on layer {} ###'.format(projection_layer, investigate_layer))
+P = torch.load('../data/pmb_'+args.dataset+'/'+args.task+'_space_removed'+'_'+str(projection_layer)+'.pt') 
+P = P.type(torch.float)
+
+gold_tr = DataProcessing(args.dataset, 'train')
+gold_tr.bert_tokenize()
+train_emb = gold_tr.get_bert_embeddings(load_option, layerwise=investigate_layer)
+emb_tr, y_tr, num_tags = gold_tr.from_sents_to_words(args.task,train_emb)
+
+gold_test = DataProcessing(args.dataset,'test')
+gold_test.bert_tokenize()
+
+test_emb = gold_test.get_bert_embeddings(load_option, layerwise=investigate_layer)
+## all in cpu right now
+emb_test, y_test, num_tags = gold_test.from_sents_to_words(args.task,test_emb)
+
+new_emb_tr = torch.matmul(P,emb_test.T).T 
+new_emb_test = torch.matmul(P,emb_test.T).T
+
+t_after = LinearClassifier(new_emb_tr,y_tr,num_tags)	 
+
+t_after.optimize()
+print('eval result')
+t_after.eval(new_emb_test,y_test_syn)
 
 sys.exit()
+
+
+
+
+
+
+
+
 
 ## calling eval
 #eval_t = EvalClassifier(emb,y,num_tags,dev_x=,dev_y=)
