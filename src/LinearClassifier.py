@@ -115,6 +115,20 @@ class INLPTraining(LinearClassifier):
 		self.original_embedding = input_embeddings.T
 	
 	def get_rowspace_projection(self,model_weight):
+		"""
+		Defines the rowspace projection onto the vectorspace spanned by the columns of a 2D matrix.
+
+		Parameters:
+		-----------
+		linear_matrix
+			The 2D matrix used to perform classification in a linear classifier.
+
+		Returns:
+		--------
+		rowspace_projection_matrix
+			The 2D matrix that, when multiplied by an embedding, results in the projection of that embedding onto the
+			vectorspace spanned by the columns of linear_matrix.
+    	"""
 		W = model_weight
 		if np.allclose(W, 0):
 			w_basis = np.zeros_like(W.T)
@@ -126,12 +140,27 @@ class INLPTraining(LinearClassifier):
 	
 	def get_projection_to_intersection_of_nullspaces(self, input_dim,rowspace_projection_matrices: List[np.ndarray]):
 		"""
-		Given a list of rowspace projection matrices P_R(w_1), ..., P_R(w_n),
-		this function calculates the projection to the intersection of all nullspasces of the matrices w_1, ..., w_n.
-		uses the intersection-projection formula of Ben-Israel 2013 http://benisrael.net/BEN-ISRAEL-NOV-30-13.pdf:
+		Determines the matrix that projects onto the intersection of the nullspaces of the provided
+		rowspace_projection_matrices.
+
+		Details:
+		--------
+		Given a list of rowspace projection matrices P_R(w_1), ..., P_R(w_n), this function calculates the projection to
+		the intersection of all nullspasces of the matrices w_1, ..., w_n. It uses the intersection-projection formula of
+		Ben-Israel 2013 http://benisrael.net/BEN-ISRAEL-NOV-30-13.pdf:
 		N(w1)∩ N(w2) ∩ ... ∩ N(wn) = N(P_R(w1) + P_R(w2) + ... + P_R(wn))
-		:param rowspace_projection_matrices: List[np.array], a list of rowspace projections
-		:param input_dim: input dim
+
+		Parameters:
+		-----------
+		input_dim: dimension of row space projection matrices
+		rowspace_projection_matrices
+			A list of matrices. Each matrix projects embeddings onto the rowspace of its respective linear classifier.
+
+		Returns:
+		--------
+		nullspace_projection_matrix
+			The 2D matrix that, when multiplied by an embedding, results in the projection of that embedding onto the
+			intersection of the nullspaces of the provided rowspace projection matrices.
 		"""
 		# This is werid because Q is not normalized so the N(P) = I-P does not work
 		I = np.eye(input_dim)
@@ -143,6 +172,8 @@ class INLPTraining(LinearClassifier):
 		## may be empty cache here
 		in_size = self.linear.in_features
 		out_size = self.linear.out_features
+		## this random seeding might be messing with the training
+		## might remove it just for testing
 		random.seed(42)
 		self.linear = torch.nn.Linear(in_size,out_size,device=device,dtype=torch.double)
 	
