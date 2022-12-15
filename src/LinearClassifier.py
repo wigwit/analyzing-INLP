@@ -52,7 +52,7 @@ class LinearClassifier(torch.nn.Module):
 
 		final_dev =  torch.argmax(dev_pred,dim=1).cpu().numpy()
 		acc = accuracy_score(dev_y.cpu().numpy(),final_dev)
-		print(f'dev accuracy score:{acc:.4f}')
+		#print(f'dev accuracy score:{acc:.4f}')
 		return dev_pred, loss.item(),acc
 
 	
@@ -61,10 +61,11 @@ class LinearClassifier(torch.nn.Module):
 		dataloader = DataLoader(data_set,batch_size=batch_size)
 		return dataloader
 	
-	def optimize(self,lr=0.01,num_epochs=10):
+	def optimize(self,lr=0.01,num_epochs=100,dev_x=None,dev_y=None):
 		optimizer = torch.optim.AdamW(self.linear.parameters(), lr = lr)
 		best_predictions = None
 		best_loss = float('inf')
+		best_dev_acc=0
 		stop_count = 0
 		output = self.output.to(device)
 		dataloader = self.batched_input(self.embeddings,output)
@@ -81,15 +82,20 @@ class LinearClassifier(torch.nn.Module):
 				preds.append(pred)
 				total_loss += loss.item()
 			
-			total_loss = total_loss/len(dataloader)
 			preds = torch.cat(preds)
 			#print(f'epoch: {epoch+1}, loss = {loss.item():.4f}')
 			#implement stopping criterion
+			if dev_x is not None:
+				d1,total_loss,dev_acc = self.eval(dev_x,dev_y)
+			else:
+				total_loss = total_loss/len(dataloader)
 			if total_loss<best_loss:
 				best_loss=total_loss
 				best_model= self.linear
 				best_predictions = preds
 				stop_count=0
+				if dev_x is not None:
+					best_dev_acc = dev_acc
 			else:
 				if stop_count ==3:
 					break
@@ -101,9 +107,10 @@ class LinearClassifier(torch.nn.Module):
 		#dev_out = self.dev_y.numpy()
 		train_acc = accuracy_score(self.output.numpy(),final_pred)
 		print(f'train accuracy score:{train_acc:.4f}')
+		print(f'dev accuracy score{best_dev_acc:.4f}')
 		#print(f'dev accuracy score:{accuracy_score(self.dev_y.numpy(),final_dev):.4f}')
 			
-		return best_model,train_acc
+		return best_model,train_acc,best_dev_acc
 
 
 
@@ -131,8 +138,10 @@ class INLPTraining(LinearClassifier):
     	"""
 		W = model_weight
 		if np.allclose(W, 0):
+			#print('generating zeros like basis')
 			w_basis = np.zeros_like(W.T)
 		else:
+			#print('generating regular basis')
 			w_basis = scipy.linalg.orth(W.T) # orthogonal basis 
 		w_basis = w_basis * np.sign(w_basis[0][0]) # handle sign ambiguity
 		P_W = w_basis.dot(w_basis.T) # orthogonal projection on W's rowspace
@@ -193,13 +202,13 @@ class INLPTraining(LinearClassifier):
 		all_P = []
 		rowspace_projections = []
 		for i in range(iteration):
+			print(f'Experiment Result for round {i}:')
 			self.reinitialize_classifier()
-			bm,acc=self.optimize()
-			if dev_x is not None:
-				dum1,dum2,acc=self.eval(dev_x,dev_y)
-				print(f'dev acc for round {i} is {acc:.4f}')
-			if acc < min_acc:
-				# TODO: not sure it should be continue here
+			bm,acc,dev_acc=self.optimize(dev_x=dev_x,dev_y=dev_y)
+			# if dev_x is not None:
+			# 	dum1,dum2,acc=self.eval(dev_x,dev_y)
+			# 	print(f'dev acc for round {i} is {acc:.4f}')
+			if dev_acc < min_acc+0.01:
 				break
 			W = bm.weight.detach().cpu().numpy()
 			Ws.append(W)
@@ -215,6 +224,8 @@ class INLPTraining(LinearClassifier):
 			P = np.matmul(P_Nwi,P)
 			all_P.append(P)
 			self.apply_projection(P)
+			if np.linalg.matrix_rank(P) == 132:
+				break
 		
 		return P, rowspace_projections, Ws,all_P
 

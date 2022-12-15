@@ -2,6 +2,8 @@
 
 source ~/anaconda3/etc/profile.d/conda.sh
 
-conda activate 575env
+conda activate news_emo
 
-python debug.py --dataset gold --task sem
+python probe.py --dataset gold --task syn --layer 8
+
+#python eval_after_inlp.py --random --task syn
