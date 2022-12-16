@@ -24,7 +24,7 @@
 % and will typically save some space.
 \usepackage{microtype}
 
-\aclfinalcopy % Uncomment this line for the final submission
+%\aclfinalcopy % Uncomment this line for the final submission
 %\def\aclpaperid{***} %  Enter the acl Paper ID here
 
 %\setlength\titlebox{5cm}
@@ -49,7 +49,7 @@
 
 \begin{abstract}
 %Motivating question and or topics of interest.
-Distinctions between Syntax and Semantics are not readily agreed upon. We seek to explore how representations of these two information sets manifest in BERT embeddings. Specifically we investigate the degree of the linear separability of syntactic and semantic information in BERT embeddings, as well as quantify how important the linear component corresponding to one information set is to solving a classification task that targets the other information set. We use Iterative Nullspace Projection to decompose word-level BERT embeddings into syntactic, non-syntactic, semantic and non-semantic components to be used in syntactic and semantic classification tasks. Our results show that there is significant overlap between the syntactic and semantic components in BERT embeddings to the degree that they are not linearly separable. Our results also indicate a factor of consideration when applying INLP, regarding the rank of the projection matrix.
+Relations between syntax and semantics are not readily agreed upon. We seek to explore how representations of syntax and semantic information sets manifest in BERT embeddings, particularly the degree of the linear separability of each other in BERT embeddings by applying Iterative Nullspace Projection (INLP) to decompose BERT embeddings into syntactic and semantic subspaces. We also investigate how important the linear component corresponding to one information set is to solving a classification task that targets the other information set. Our results show that both syntactic and semantics informations are not linearly represented in BERT embeddings. Therefore INLP fails separate syntactic and semantic space from BERT embeddings and does not provide interpretable results. The results also indicate a factor of consideration when applying INLP, regarding the rank of the projection matrix.
 %How we address it and our results.
 %Simplified conclusion. 
 \end{abstract}
@@ -66,14 +66,17 @@ Distinctions between Syntax and Semantics are not readily agreed upon. We seek t
 The boundary between semantics and syntax has been hotly debated, but do language model embeddings present this information in a way that is easily separated and recognized by humans? The objective of this project is to explore BERT\rq s \citep{bert} reliance on certain syntactic information when handling a semantic task, and vice versa. Specifically, we seek to quantify the importance of linearly-separable syntactic or semantic information when performing semantic or syntactic classification, respectively.
 
 %may remove this
-To achieve our goal, we construct a linear probing system for a task and then employ Iterative Nullspace Projection (INLP from here on) \citep{inlp} to generate a new embedding devoid of information learned from the probing task. We then measure the performance of this new embedding on downstream syntactic and semantic classification tasks. The design of our probing procedure follows \citealp{amnesia}, which employs INLP to investigate whether BERT uses part-of-speech (POS) information when solving language modeling (LM) tasks.
+To achieve our goal, we apply a novel method Iterative Nullspace Projection (INLP from here) \citep{inlp}for removing information from an embedding. INLP iteratively trains linear models on a specific classification task, and projects the input on the intersection of the nullspaces of those linear models. 
 
-A novel method for removing information from an embedding, INLP iteratively trains linear models on a specific classification task, and projects the input on the intersection of the nullspaces of those linear models. Our objective is that, by applying the INLP procedure to a syntactic task, we are able to separate the representation into a syntactic space and a non-syntactic space. We then compare the performance of a linear classifier for semantic labels using the original BERT embeddings with an otherwise identical model trained on embeddings projected onto the non-syntactic space. Conversely, we can define a semantic and non-semantic space by probing a semantic task, and then investigate the performance of embeddings projected onto those spaces when performing a syntactic classification task. The performance of these embeddings on their opposing classification tasks will give us an indication of how linearly separable the two information sets are.%Once we derive the semantic space and syntactic space from the experiment, we further investigate on the separability of the two spaces by comparing the embedding projections. %See section ???
+Our experiment scheme follows \citealp{amnesia}, which employs INLP to investigate whether BERT uses part-of-speech (POS) information when solving language modeling (LM) tasks. Similarly, we construct a linear probing system for a task and then employ INLP to generate a new embedding devoid of information learned from the probing task. We then evaluate the performance of this new embedding on another downstream task. Then we will perform the same procedure but switch the probing task and downstream evaluating task. To evaluate the separability of syntactic and semantic representation, we need two tasks that could extract those information on word level. Hence, we choose Combinatory Categorical Grammar (CCG from here on) tagging \citep{ccg-bank} as the syntactic task and semantic tagging \citep{semantics_tagging} as the semantic task. 
+
+% insert a figure if possible
+Our objective is that, by applying the INLP procedure to a syntactic task, we are able to separate the representation into a syntactic space and a non-syntactic space. We then compare the performance of a linear classifier for semantic labels using the original BERT embeddings with an otherwise identical model trained on embeddings projected onto the non-syntactic space. Conversely, we can define a semantic and non-semantic space by probing a semantic task, and then investigate the performance of embeddings projected onto those spaces when performing a syntactic classification task. The performance of these embeddings on their opposing classification tasks will give us an indication of how linearly separable the two information sets are.%Once we derive the semantic space and syntactic space from the experiment, we further investigate on the separability of the two spaces by comparing the embedding projections. %See section ???
 %Make the research question very clear
 %Should a model be able to solve a semantic task without syntactic information?
 %Vice versa? (Just be very explicit here)
 
-To evaluate the separability of syntax and semantics, we use two tasks: one task for the probing system and INLP procedure, and one task for evaluating performance on embeddings before and after INLP. We choose Combinatory Categorical Grammar (CCG from here on) tagging \citep{ccg-bank} as the syntactic task and semantic category labeling \citep{propbank} as the semantic task. 
+
 
 The remainder of the paper proceeds as follows: Section \ref{sec:related} explores previous work related to our experiment. Section \ref{sec:method} provides a description of the probing and evaluation tasks and gives an overview of the experiment pipeline. Section \ref{sec:result} reviews our experiments and affiliated results. Section \ref{sec:discussion} discusses the implications of those results. Finally, section \ref{sec:conclusion} gives an overview of the entire process and outlines possible next steps. 
 
@@ -96,57 +99,75 @@ The separation and overlap between syntax and semantics has been of interest to 
 %Similarly, the authors of \citep{multiDis} train a variational autoencoder with two latent variables for syntactic representations and semantic representations in order to test the separability of these two information sets in sentence embeddings across various models. To encourage the separation of these information sets the authors use multi-task training that incorporates paraphrase reconstruction loss, discriminative paraphrase loss and word position loss. They then use syntactic similarity tasks to measure their success in disentangling the syntactic and semantic information sets across various model embeddings.
 
 %How we differ from these
-Unlike the aforementioned studies, we seek to explore the linear separability of syntactic and semantic information in large language model embeddings at the word level. To accomplish this task we apply the Iterative Nullspace Projection method to syntactic (CCG) and semantic labeling tasks in order to define the syntactic and semantic components of BERT embeddings that will be used in our downstream classification tasks. 
+Unlike the aforementioned studies, we seek to explore the linear separability of syntactic and semantic information in large language model embeddings at the word level. To accomplish this task we apply the INLP method to syntactic (CCG) and semantic tasks in order to define the syntactic and semantic components of BERT embeddings that will be used in our downstream classification tasks. 
 
 INLP, introduced in \citealp{inlp}, is a method to define a linear guarding function that masks all the linear information in a word embedding that may be used for a downstream classification task. In the original paper the authors use this method to remove gender bias from BERT embeddings of biographical descriptions and then measure how easy it is to determine an individual's gender from the guarded embedding by using various downstream classification methods. Beyond this example, the authors hypothesize several additional use cases for this procedure, including information disentanglement.
 
 The authors of \citealp{amnesia} use INLP for exactly this task. They use INLP to separate and guard certain linguistic information sets from BERT embeddings in order to better understand what information is being used by large language models, and not just what is encoded. The main premise behind this paper is that if a particular property is used to solve a task, then the removal of that property should negatively influence the model's ability to solve that task. Specifically, \citealp{amnesia} seeks to quantify the importance of the information sets used for part-of-speech tagging, syntactic dependency labeling, named entity recognition and syntactic constituency boundaries on BERT's ability to perform the language modeling task.
 
-We take a similar approach to \citealp{amnesia} by separating the information sets used for CCG tagging and semantic labeling from word-level BERT embeddings, and test how the removal of these information sets impacts the embeddings' performance on these tasks.
+We take a similar approach to \citealp{amnesia} by separating the information sets used for CCG tagging and semantic tagging from word-level BERT embeddings, and test how the removal of these information sets impacts the embeddings' performance on these tasks.
 
 
 
-\section{Methods}
+\section{Experiment}
 \label{sec:method}
 
 %How are you addressing your research question
 %models, data, etc.
 
-We construct two separate probing tasks to isolate the syntactic and semantic information in word-level BERT embeddings. The embeddings are separated into syntactic and non-syntactic, and semantic and non-semantic components via INLP which is described in section \ref{sec:inlp-method}. These embedding components are then combined to form new embeddings, which are evaluated on the same tasks that were used for probing. %If time permits, we will also evaluate how these new embeddings perform on the language modeling task. 
+To isolate the syntactic and semantic information from word-level BERT embeddings efficiently, we implement INLP using method described in section \ref{sec:inlp-method}. CCG tagging and semantics tagging are probing tasks for INLP to extract relevant information from embeddings, which are described in section \ref{sec:data},\ref{sec:probing} . %These embedding components are then combined to form new embeddings, which are evaluated on the same tasks that were used for probing.%
+ We also conduct experiments using BERT embeddings from different layers to see which layer might contain more syntactic or semantics information, as described in \ref{layer}. %If time permits, we will also evaluate how these new embeddings perform on the language modeling task. 
 
 
 
 \subsection{The Iterative Null-Space Projection method}
 \label{sec:inlp-method}
 
-The INLP method first introduced in \citealp{inlp}, is used to create a guarding function that masks all the linear information contained in a set of vectors, $X$, that can be used map each vector to $c \in C$, where $C$ is the set of all categories. This is accomplished by training a linear classifier, a matrix $W$, that is applied to each $x \in X$ in order to predict the correct category $c$ with the greatest possible accuracy. In other words, $Wx$ defines a distribution over the set of categories $C$ and we assign $x$ to the class $c \in C$ which is allotted the greatest probability by $Wx$. Note that the classifier's accuracy must be greater than that achieved by guessing the majority category, otherwise $x$ contains no linear information relevant for the categorization task and thus no guarding function is needed. Once $W$ is determined, for any $x \in X$ we can remove the information that $W$ uses to predict $c$ by projecting $x$ onto the null-space of $W$, $N(W) = \{x | Wx=0\}$. Call this projection function $P_1$ and let $\hat{x} = P_1(x)$. This removes all of the linear information in $x$ that $W$ used to predict the category $c$. 
+The INLP method first introduced in \citealp{inlp}, is used to create a guarding function that masks all the linear information contained in a set of vectors, $X$, that can be used map each vector to $c \in C$, where $C$ is the set of all categories. This is accomplished by training a linear classifier, a matrix $W$, that is applied to each $x \in X$ in order to predict the correct category $c$ with the greatest possible accuracy. 
+%In other words, $Wx$ defines a distribution over the set of categories $C$ and we assign $x$ to the class $c \in C$ which is allotted the greatest probability by $Wx$. Note that the classifier's accuracy must be greater than that achieved by guessing the majority category, otherwise $x$ contains no linear information relevant for the categorization task and thus no guarding function is needed. %
+Once $W$ is determined, for any $x \in X$ we can remove the information that $W$ uses to predict $c$ by projecting $x$ onto the null-space of $W$, $N(W) = \{x | Wx=0\}$. Call this projection function $P_1$ and let $\hat{x} = P_1(x)$. This removes all of the linear information in $x$ that $W$ used to predict the category $c$. 
 %Need to cite INLP paper
 
-However, this process does not necessarily remove all of the linear information in $x$ that could be used to predict $c$. For example, $x$ may contain redundant information and $W$ may have only used one set of this information for its prediction. In this case, the redundant information would still be present in $\hat{x}$. Thus, we must repeat the above process, defining a new linear classifier $\hat{W}$ that uses $\hat{x}$  to predict $c$. If $\hat{W}$ is still able to predict $c$ with a greater than majority class guess accuracy, then we know that $\hat{x}$ contained linear information about $c$. As above, we project $\hat{x}$ onto the null-space of $\hat{W}$ via the projection function $P_2$ and define a new $\hat{x} = P_2(P_1(x))$.
+However, this process does not necessarily remove all of the linear information in $x$ that could be used to predict $c$. 
+%For example, $x$ may contain redundant information and $W$ may have only used one set of this information for its prediction. In this case, the redundant information would still be present in $\hat{x}$. %
+Thus, we must repeat the above process, defining a new linear classifier $\hat{W}$ that uses $\hat{x}$  to predict $c$. If $\hat{W}$ is still able to predict $c$ with a greater than majority class guess accuracy, then we know that $\hat{x}$ contained linear information about $c$. As above, we project $\hat{x}$ onto the null-space of $\hat{W}$ via the projection function $P_2$ and define a new $\hat{x} = P_2(P_1(x))$.
 
-We iteratively apply this process until no linear information remains in $\hat{x}$, i.e. a linear classifier is unable to predict the correct category $c$ with any probability greater than that achieved by guessing the majority class. The final $\hat{x} = P_n(P_{n-1}(\dots P_1(x)))$ contains no linear information about the categories in $C$ and we call $P(x) = P_n(P_{n-1}(\dots P_1(x)))$ the guarding function. 
+We iteratively apply this process until no linear information remains in $\hat{x}$, i.e. a linear classifier is unable to predict the correct category $c$ with any probability greater than that achieved by guessing the majority class\footnote{The stopping criterion follows \citealp{amnesia}, iterations will stop if the linear classifier achieve within one point above majority accuracy on development set.}. The final $\hat{x} = P_n(P_{n-1}(\dots P_1(x)))$ contains no linear information about the categories in $C$ and we call $P(x) = P_n(P_{n-1}(\dots P_1(x)))$ the guarding function. 
 
-We will pair the INLP method with the probing tasks described in sections \ref{sec:syntactic} and \ref{sec:semantics} in order to create two guarding functions that will enable us to isolate the linear components of BERT embeddings that contain syntax-specific and semantics-specific information. 
+% adding the formula to efficiently find the intersection
+
+The projection matrix $P$ derived by matrix multipcliaitons $P_n\cdot P_{n-1} \dots P_1$ can be susceptible to numerical errors, therefore \citealp{inlp} utilized the following formula using \textit{rowspace projection}\footnote{$P_R(W_i)$ in the formula means row space projection of weight matrix $W$.}  proposed by \citealp{ben-israel_2015} to compute the intersection of null spaces of weight matrix. Then projection matrix $P$ is derived from null space projection of the intersection, $P=P_{\cap_{i=1}^n N(W_i)}$, instead. Our experiment follow the same computation. 
+
+\begin{quote}
+    $\cap_{i=1}^n N(W_i) = N(\sum_{i=1}^n(P_R(W_i)) )$ 
+\end{quote}
+
+
+
+% We will pair the INLP method with the probing tasks described in sections \ref{sec:syntactic} and \ref{sec:semantics} in order to create two guarding functions that will enable us to isolate the linear components of BERT embeddings that contain syntax-specific and semantics-specific information. 
 
 
 \subsection{Data}
 \label{sec:data}
 
-We use the English Parallel Meaning Bank v4.0 \citep{pmbData} to test the linear separability of the semantic and syntactic information in word-level BERT embeddings. This dataset consists of gold standard and silver standard word-level semantic tags. The gold standard contains 5,438 sentences with annotations that are manually verified while the silver standard contains 62,739 sentences with autogenerated annotations. All of our experiments are conducted on gold standard data. 
+We use the English Parallel Meaning Bank v4.0 \citep{pmbData} to test the linear separability of the semantic and syntactic information in word-level BERT embeddings. This dataset consists of gold standard and silver standard word-level semantic tags. The gold standard contains 5,438 sentences with annotations that are manually verified while the silver standard contains 62,739 sentences with autogenerated annotations. All of our experiments are conducted on gold standard data with standard train/dev/test split\footnote{Gold standard dataset contains total of 34706 words, with 80\% of training and dev data, and 20\% of testing data}. 
 
-The original dataset does not include CCG tags, however \citealp{pmbData} utilized a CCG parser to produce CCG tags. We follow a similar procedure and apply a CCG parser \citep{ccg_tagger} to develop word-level CCG tags. Once we obtain both CCG tags and semantic tags for the dataset, we can perform the syntactic and semantic probing tasks as desired.
+The original dataset does not include CCG tags, however \citealp{pmbData} utilized a CCG parser to produce CCG tags. We follow a similar procedure and apply a CCG parser \citep{ccg_tagger} to develop word-level CCG tags. Once we obtain both CCG tags and semantic tags for the dataset, we can perform word-level syntactic and semantic probing tasks as desired. The total number of labels in CCG tags and Semantics tags are 159 and 72 respectively.
+
+% adding the train dev test split and word count
+% train words = 24986
+% dev words 2781
+% test words = 6939
+
+\subsection{Probing tasks}
+\label{sec:probing}
+% num tags = 159
+The  probing task involves training a linear classifier on the final layer BERT embeddings in order to predict the CCG tag or semantic tag associated with each word. We will use this classifier in the INLP algorithm in order to create a guarding function for the information that is necessary to complete the task. Take CCG tag as an example: for a given embedding, $v_{orig}$, the projection that results from applying this guarding function, $P_{syn}$ or $P_{sem}$, to the embedding will represent the non-syntactic information contained in the embedding and will from now on be referred to as the ``non-syntactic component'' of the embedding, $v_{no syn} = P_{syn} v_{orig}$.% We can then determine the ``syntactic component'' of the embedding by taking the difference of the embedding vector with the non-syntactic component, $v_{syn} = v_{orig} - v_{no syn}$.
 
 
-\subsection{Syntactic probing task}
-\label{sec:syntactic}
-
-The syntactic probing task involves training a linear classifier on the final layer BERT embeddings in order to predict the CCG tag associated with each word. We will use this classifier in the INLP algorithm in order to create a guarding function for the information that is necessary to complete the CCG labeling task. For a given embedding, $v_{orig}$, the projection that results from applying this guarding function, $P_{syn}$, to the embedding will represent the non-syntactic information contained in the embedding and will from now on be referred to as the ``non-syntactic component'' of the embedding, $v_{no syn} = P_{syn} v_{orig}$. We can then determine the ``syntactic component'' of the embedding by taking the difference of the embedding vector with the non-syntactic component, $v_{syn} = v_{orig} - v_{no syn}$.
-
-
-\subsection{Semantic probing task}
-\label{sec:semantics}
-
-Similar to the above, the semantic probing task involves training a linear classifier on the final layer BERT embeddings in order to predict the semantic tag associated with each word. This classifier is used in the INLP algorithm in order to create a guarding function, $P_{sem}$, for the information necessary to complete the semantic tag labeling task. As described in the syntactic probing task section, we use the resulting guarding function to decompose the original embedding into a ``non-semantic component'', $v_{no sem} = P_{sem} v_{orig}$, and a ``semantic component'', $v_{sem} = v_{orig} - v_{no sem}$. 
+% num tags = 72
+Similar to the above, the semantic probing task involves training a linear classifier on the final layer BERT embeddings in order to predict the semantic tag associated with each word. This classifier is used in the INLP algorithm in order to create a guarding function, $P_{sem}$, for the information necessary to complete the semantic tag labeling task. As described in the syntactic probing task, we use the resulting guarding function to compute a ``non-semantic embedding'', $v_{no sem} = P_{sem} v_{orig}$.
+%, and a ``semantic component'', $v_{sem} = v_{orig} - v_{no sem}$. 
 
 
 \subsection{Evaluation tasks}
@@ -157,17 +178,12 @@ Our goal is to determine which information sets captured in the BERT embeddings 
 %The new embeddings to be tested include the non-syntactic component and the non-semantic component derived from the probing tasks. Additionally, we can create an embedding that contains syntactic information and removes semantic information by linearly projecting the syntactic component onto the non-semantic component, $v_{syn - sem} = P_{sem} v_{syn}$. Using a similar process, we can create an embedding that contains semantic information and removes the syntactic information present, $v_{sem - syn} = P_{syn} v_{sem}$. 
 % Finally, we can create an embedding that contains the semantic information captured by the syntactic component, by linearly projecting the syntactic component onto the semantic component, $v_{syn * sem} = \langle v_{syn} ,v_{sem} \rangle u_{sem}$ where $u_{sem}$ is the unit vector for $v_{sem}$. And similarly, we can create an embedding that contains the syntactic information captured by the semantic component, $v_{sem * syn} = \langle v_{sem} , v_{syn} \rangle  u_{syn}$
 
-We will assess each of the non-syntactic and non-semantic embedding types, the original BERT embeddings and the embeddings created by randomly removing directional information on the CCG and semantic labeling tasks that were used in the probes. 
+We will assess each of the non-syntactic and non-semantic embedding types, the original BERT embeddings and the embeddings created by randomly removing directional information on the CCG and semantic labeling tasks that were used in the probes.  All the embeddings are listed in table \ref{description}.
 
 %We have also hypothesized several additional assessment tasks that we would like to undertake, if time permits, or relegate to future work. The first of these tasks is to assess how each embedding type performs on the language modeling task. We would also like to perform the evaluation classification task using a feed-forward neural network with a single hidden layer that contains 10 nodes, in order to determine if there is any task-relevant non-linear information present in the embeddings. If time permits, we would also like to look for patterns in the performance of different embeddings, e.g. explore if a particular embedding type tends to perform better/worse on one of the evaluation tasks for words of a particular POS compared to others. Finally, if time permits we would like to repeat the above procedure to explore the embeddings output by different layers of the BERT model. 
 
 %FFNN description is entirely arbitrary, it was just something we talked about during one of our meetings. If anyone has a particular architecture in mind here, please feel free to update this section.
 
-
-\subsection{Layer-wise evaluation}
-In addition to the final layer BERT embeddings, we perform a similar analysis on the embeddings derived from different layers of the BERT architecture, in order to determine the separability of these information sets at each layer. For embedding $v_{orig_i}$ from layer $i,$ a linear classifier is trained for each probing task to acquire guarding functions $P_{syn_i}$ and $P_{sem_i},$ respectively. Applying these projection functions, we are able to acquire $v_{nosyn_i}$ and $v_{nosem_i}.$ Subtracting them from the original embedding, we get the semantic representation $v_{sem_i}$ and the syntatic representation $v_{syn_i}.$ We also randomly remove the same number of dimensions in the original embedding for comparison.
-
-By comparing the experiment results across different information sets and different layers, we hope to better understand how BERT processes different types of linguistic information throughout the encoding process.
 
 \begin{table}[ht]
     \centering
@@ -176,10 +192,10 @@ By comparing the experiment results across different information sets and differ
         $v_{orig}$ & Original BERT embeddings  \\
         $v_{nosem} = P_{sem} v_{orig}$ & Gained after INLP with semantic task \\
         $v_{nosyn}= P_{syn} v_{orig}$ & Gained after INLP with syntactic task \\
-        $v_{sem} = v_{orig}-v_{nosem}$ & Semantic representation \\
-        $v_{syn} = v_{orig}-v_{nosyn}$ & Syntactic representation \\
-        Rand($v$, $n$) & embeddings $v$ with n random directions removed \\
-        Subscript $i$ & Objects relating to the $i$-th layer of the BERT architecture rather than the final layer\\
+        % $v_{sem} = v_{orig}-v_{nosem}$ & Semantic representation \\
+        % $v_{syn} = v_{orig}-v_{nosyn}$ & Syntactic representation \\
+        Rand($v$, $n$) & Embeddings $v$ with n random directions removed \\
+        % Subscript $i$ & Objects relating to the $i$-th layer of the BERT architecture rather than the final layer\\
         %$v_{syn-sem} = P_{sem} v_{syn}$ &Contains syntactic features only \\
         %$v_{sem-syn} = P_{syn} v_{sem}$ &Contains semantic features only \\
         % $v_{syn*sem} = \langle v_{syn}, v_{sem} \rangle \cdot \frac{v_{syn}}{\|v_{sem}\|}$ & Syntactic representations projected on semantic space\\
@@ -194,13 +210,24 @@ By comparing the experiment results across different information sets and differ
 \end{table}
 
 
+\subsection{Layer-wise evaluation}
+\label{layer}
+In addition to the final layer BERT embeddings, we perform a similar analysis on the embeddings derived from different layers of the BERT architecture, in order to determine the separability of these information sets at each layer. For embedding $v_{orig_i}$ from layer $i,$ a linear classifier is trained for each probing task to acquire guarding functions $P_{syn_i}$ and $P_{sem_i},$ respectively. Applying these projection functions, we are able to acquire $v_{nosyn_i}$ and $v_{nosem_i}.$ Subtracting them from the original embedding, we get the semantic representation $v_{sem_i}$ and the syntatic representation $v_{syn_i}.$ We also randomly remove the same number of dimensions in the original embedding for comparison.
+
+By comparing the experiment results across different information sets and different layers, we hope to better understand how BERT processes different types of linguistic information throughout the encoding process.
+
+
+
+
 
 \section{Results}
 \label{sec:result}
 \subsection{Final layer evaluation}
 We first evaluate our two tasks on the original embeddings, and determine that linear classifiers can successfully predict both CCG tags and semantic tags (around 85\% testing accuracy), as shown in table \ref{role description}. We then apply the INLP method to derive the guarding matrices $P_{syn}$ and $P_{sem}$, which are used to project the original embeddings onto the complements of the syntactic information sub-space and the semantic information sub-space. By applying linear transformations to the original embeddings and their projections, we are able to extract the embeddings described in table \ref{description}. 
 
-To ensure a fair assessment of the impact of the information loss, we conduct experiments for which we start with the original BERT embeddings and randomly remove the same number of directions that our derived embeddings lost. For the embeddings derived from projection matrices, we record the number of removed directions using $Null(P)$, where $P$ is the projection matrix. \footnote{For embeddings not derived from matrix multiplication, we obtain the number from $Null(M)$ where $M$ is the embedding matrix with size (768,instance number). This is not necessarily equivalent to the number of direction removed. $Null(M) \geq Null(P)$ for the embedding matrix $M$ that corresponds to projection $P$, but in practice the numbers are very close. With this approach we err on the side of removing more random directions from our random embeddings, resulting in a more conservative comparison when assessing our derived embeddings. Also note that we decided not to include these types of embeddings in our final assessment due to concerning behavior we witnessed after performing the linear transformation to obtain the embeddings. Specifically, the rank of the resulting embedding matrix did not match our expectations. This may be due to a rounding or an issue with the orthonormalization process, but we were unable to confirm. So we decided to remove all embeddings derived in this manner from our evaluation process until we are able to determine the source of this behavior. This means that $v_{syn}$ and $v_{sem}$ will not be included in our final evaluation.} Then we create embeddings with the same number of directions randomly removed and train the linear classifiers on these embeddings. The testing accuracies from our experiments can be found in table \ref{role description}.
+To ensure a fair assessment of the impact of the information loss, we conduct experiments for which we start with the original BERT embeddings and randomly remove the same number of directions that our derived embeddings lost. For the embeddings derived from projection matrices, we record the number of removed directions using $Null(P)$, where $P$ is the projection matrix. 
+%\footnote{For embeddings not derived from matrix multiplication, we obtain the number from $Null(M)$ where $M$ is the embedding matrix with size (768,instance number). This is not necessarily equivalent to the number of direction removed. $Null(M) \geq Null(P)$ for the embedding matrix $M$ that corresponds to projection $P$, but in practice the numbers are very close. With this approach we err on the side of removing more random directions from our random embeddings, resulting in a more conservative comparison when assessing our derived embeddings. Also note that we decided not to include these types of embeddings in our final assessment due to concerning behavior we witnessed after performing the linear transformation to obtain the embeddings. Specifically, the rank of the resulting embedding matrix did not match our expectations. This may be due to a rounding or an issue with the orthonormalization process, but we were unable to confirm. So we decided to remove all embeddings derived in this manner from our evaluation process until we are able to determine the source of this behavior. This means that $v_{syn}$ and $v_{sem}$ will not be included in our final evaluation.} 
+Then we create embeddings with the same number of directions randomly removed and train the linear classifiers on these embeddings. The testing accuracies from our experiments can be found in table \ref{role description}.
 
 \begin{table*}[h]
     \centering
@@ -210,16 +237,16 @@ To ensure a fair assessment of the impact of the information loss, we conduct ex
     \hline
     $v_{orig}$ & 0 & $84.75\%$ & $88.56\%$ \\
     \hline
-
-    Rand($v_{orig}, |v_{nosem}|$) & 77 & $84.06\%$ & $87.71\%$ \\
-    Rand($v_{orig}, |v_{nosyn}|$) & 159 & $82.26\%$ & $87.57\%$ \\
+    Majority Guess & N/A&$16.57\%$  &$22.93\%$ \\ \hline
+    Rand($v_{orig}, |v_{nosem}|$) & 792 & $16.57\%$ & $22.93\%$ \\
+    Rand($v_{orig}, |v_{nosyn}|$) & 795 & $16.57\%$ & $22.93\%$ \\
     %Rand($|v_{syn-sem}|$) & 81 & $83.11\%$ & $87.61\%$ \\
     %Rand($|v_{sem-syn}|$) & 161 & $82.46\%$ & $86.04\%$ \\
     % Rand($|v_{syn*sem}|$) & 0 & p$\%$ & p$\%$ \\
     % Rand($|v_{sem*syn}|$) & 0 & p$\%$ & p$\%$ \\
     \hline
-    $v_{nosem}$ & 77 & $27.93\%$ & $17.28\%$ \\
-    $v_{nosyn}$ & 159 & $23.76\%$ & $49.43\%$ \\
+    $v_{nosem}$ & 792 & $16.57\%$ & $22.93\%$ \\
+    $v_{nosyn}$ & 795 & $16.57\%$ & $22.93\%$ \\
     %$v_{syn-sem}$ & 81 & $34.24\%$ & $33.91\%$ \\
     %$v_{sem-syn}$ & 161 & $26.96\%$ & $50.21\%$ \\
     % $v_{syn*sem}$ & 0 & p$\%$ & p$\%$ \\
