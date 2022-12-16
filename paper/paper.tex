@@ -330,10 +330,21 @@ Though INLP successfully produces interesting results on various tasks, it is wo
 
 
 
+\section*{Ethical Consideration}
+\subsection*{Scientific Artifacts}
+Below is a list of scientific artifact used along with the names of their licenses. None of these artifacts restrict use for research purposes. We are not using this work for commercial purposes.
 
+\begin{itemize}
+    \item Parallel Meaning Bank\cite{pmbData} -  ODC-BY 1.0
+    \item BERT\cite{bert}  – Apache License Version 2.0
+    \item Deccg\cite{ccg_tagger} - MIT License
+    \item PyTorch\cite{torch} - PSF License Agreement
+\end{itemize}
 
+Of the artifacts used, the only data source is the Parallel Meaning Bank, which does not contain any sensitive information. We used only English data from the PMB, which is intended for syntax and semantics research and makes no attempt, as far as we are aware, to balance the demographic groups represented. This is not a problem for our work because we are not using the PMB to generate anything.
 
-
+\section*{Computational Experiments}
+The parameters used are the word embeddings and syntactic/semantic tags; this yields 122,112 parameters for the syntactic model and 55,296 parameters for the semantic model. The models altogether took two GPU models to run, and the results reflect a one-time run on a computing cluster. The run time is around 5 minutes for a single probing task.
 \bibliography{acl2020.bib}
 \bibliographystyle{acl_natbib.bst}
 
