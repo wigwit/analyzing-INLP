@@ -1,5 +1,5 @@
 # 575 Project
-Group 1 for "Analyzing Neural Language Models" research seminar  
+Group for "Analyzing Neural Language Models" research seminar  
 Group members: Qingxia Guo, Lindsay Skinner, Gladys Wang, Saiya Karamali  
 
 ## Environment Setup
