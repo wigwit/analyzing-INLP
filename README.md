@@ -1,4 +1,4 @@
-# 575 Project
+# Analyzing Compositionality of Embeddings from LLM
 Group for "Analyzing Neural Language Models" research seminar  
 Group members: Qingxia Guo, Lindsay Skinner, Gladys Wang, Saiya Karamali  
 
